@@ -11,5 +11,7 @@ export default defineConfig({
     sourcemap: false,
     minify: 'esbuild',
   },
-  base: './',
+  css: {
+    postcss: './postcss.config.cjs',
+  },
 })
