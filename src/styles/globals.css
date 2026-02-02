@@ -40,7 +40,26 @@ body {
 /* Header */
 .header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.header-content h1 {
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--accent);
+  margin: 0;
+}
+
+.logo {
+  color: var(--accent);
 }
 
 .title {
@@ -55,8 +74,10 @@ body {
 }
 
 .subtitle {
-  color: var(--text-secondary);
-  font-size: 1.125rem;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
 }
 
 /* Buttons */
@@ -71,6 +92,12 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  background: var(--accent);
+  color: white;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
 }
 
 .btn-primary {
@@ -82,23 +109,23 @@ body {
   background: var(--accent-hover);
 }
 
+.btn-secondary {
+  background: var(--bg-card);
+  color: white;
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+}
+
 .btn-danger {
   background: var(--red);
   color: white;
 }
 
 .btn-danger:hover {
-  background: var(--red-hover);
-}
-
-.btn-secondary {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-hover);
+  background: #dc2626;
 }
 
 .btn-sm {
@@ -232,6 +259,65 @@ body {
   margin-top: 0.25rem;
 }
 
+/* Delete button */
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: transform 0.2s;
+  opacity: 0.7;
+}
+
+.delete-btn:hover {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+/* Edit button */
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: transform 0.2s;
+  opacity: 0.7;
+}
+
+.edit-btn:hover {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+/* Lock button - top right */
+.lock-button {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
+  transition: all 0.3s;
+  z-index: 100;
+}
+
+.lock-button:hover {
+  background: var(--accent-hover);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.6);
+}
+
+.lock-button svg {
+  color: white;
+}
+
 /* Filters */
 .filters {
   background: var(--bg-card);
@@ -298,8 +384,38 @@ body {
   width: 100%;
 }
 
-.modal h2 {
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h2,
+.modal-content h2 {
   margin-bottom: 1rem;
+}
+
+.modal input,
+.modal-content input {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modal input:focus,
+.modal-content input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .modal-actions {
@@ -311,9 +427,19 @@ body {
 /* Header Actions */
 .header-actions {
   display: flex;
-  justify-content: center;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Admin Controls */
+.admin-controls {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
 }
 
 /* Responsive */

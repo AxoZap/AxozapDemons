@@ -10,6 +10,7 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     difficulty: 'Medium' as Demon['difficulty'],
+    rating: 'Star' as Demon['rating'],
     gauntlet: false,
     weekly: false,
     event: false,
@@ -40,6 +41,7 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
       const demonData: any = {
         name: formData.name,
         difficulty: formData.difficulty,
+        rating: formData.rating,
         gauntlet: formData.gauntlet,
         weekly: formData.weekly,
         event: formData.event,
@@ -53,6 +55,7 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
       setFormData({
         name: '',
         difficulty: 'Medium',
+        rating: 'Star',
         gauntlet: false,
         weekly: false,
         event: false,
@@ -100,6 +103,24 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
               <option value="Hard">Hard</option>
               <option value="Insane">Insane</option>
               <option value="Extreme">Extreme</option>
+            </select>
+          </div>
+
+          {/* Rating */}
+          <div className="form-group">
+            <label htmlFor="rating" className="form-label">
+              Rating
+            </label>
+            <select
+              id="rating"
+              value={formData.rating}
+              onChange={(e) =>
+                setFormData({ ...formData, rating: e.target.value as Demon['rating'] })
+              }
+              className="form-select"
+            >
+              <option value="Star">⭐ Star</option>
+              <option value="Moon">🌙 Moon</option>
             </select>
           </div>
         </div>

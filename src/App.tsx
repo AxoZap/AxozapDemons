@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DemonList } from './components/DemonList';
 import { AddDemonForm } from './components/AddDemonForm';
+import { EditDemonForm } from './components/EditDemonForm';
 import { DemonFilters } from './components/DemonFilters';
 import { Flame, Lock, Loader2 } from 'lucide-react';
 import { projectId, publicAnonKey } from './utils/supabase/info';
@@ -9,6 +10,7 @@ export interface Demon {
   id: string;
   name: string;
   difficulty: 'Easy' | 'Medium' | 'Hard' | 'Insane' | 'Extreme';
+  rating: 'Star' | 'Moon';
   gauntlet: boolean;
   weekly: boolean;
   event: boolean;
@@ -21,11 +23,13 @@ export default function App() {
   const [demons, setDemons] = useState<Demon[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingDemon, setEditingDemon] = useState<Demon | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [password, setPassword] = useState('');
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [filters, setFilters] = useState({
     difficulty: 'All',
+    rating: 'All',
     gauntlet: false,
     weekly: false,
     event: false,
@@ -85,6 +89,167 @@ export default function App() {
     }
   };
 
+  const handleDeleteDemon = async (id: string) => {
+    if (!isUnlocked) {
+      alert('You must be unlocked to delete demons!');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this demon?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/demons/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${publicAnonKey}`,
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        setDemons(demons.filter(d => d.id !== id));
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to delete demon');
+      }
+    } catch (error) {
+      console.error('Error deleting demon:', error);
+      alert('Failed to delete demon. Please try again.');
+    }
+  };
+
+  const handleEditDemon = (id: string) => {
+    const demon = demons.find(d => d.id === id);
+    if (demon) {
+      setEditingDemon(demon);
+    }
+  };
+
+  const handleSaveEdit = async (updatedDemon: Demon) => {
+    try {
+      const response = await fetch(`${API_URL}/demons/${updatedDemon.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${publicAnonKey}`,
+        },
+        body: JSON.stringify({ password, demon: updatedDemon }),
+      });
+
+      if (response.ok) {
+        const savedDemon = await response.json();
+        setDemons(demons.map(d => d.id === savedDemon.id ? savedDemon : d));
+        setEditingDemon(null);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to update demon');
+      }
+    } catch (error) {
+      console.error('Error updating demon:', error);
+      alert('Failed to update demon. Please try again.');
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (!isUnlocked) {
+      alert('You must be unlocked to import demons!');
+      return;
+    }
+
+    // Import the bulk import function
+    const { bulkImportDemons } = await import('./import-demons');
+    
+    try {
+      const result = await bulkImportDemons(password);
+      alert(`✅ Successfully imported ${result.count} demons!`);
+      // Reload demons from server
+      await loadDemons();
+    } catch (error) {
+      console.error('Error importing demons:', error);
+      alert('Failed to import demons. Please try again.');
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!isUnlocked) {
+      alert('You must be unlocked to clear demons!');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/demons/clear`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${publicAnonKey}`,
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`✅ Server cleared ${result.count} demons from database`);
+        console.log(`📊 Server reports ${result.remaining} demons remaining`);
+        
+        // Reload from server to confirm deletion
+        await loadDemons();
+        
+        if (result.remaining === 0) {
+          console.log(`✅ Successfully cleared all ${result.count} demons!`);
+        } else {
+          console.log(`⚠️ Cleared ${result.count} demons, but ${result.remaining} still remain.`);
+        }
+      } else {
+        const error = await response.json();
+        console.error('Clear failed:', error);
+      }
+    } catch (error) {
+      console.error('Error clearing demons:', error);
+    }
+  };
+
+  const handleNuclearReset = async () => {
+    if (!isUnlocked) {
+      alert('You must be unlocked to nuke the database!');
+      return;
+    }
+
+    try {
+      console.log('💥 Starting nuclear reset...');
+      const response = await fetch(`${API_URL}/nuclear-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${publicAnonKey}`,
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`💥 Nuclear reset complete!`);
+        console.log(`Nuked: ${result.nuked}, Remaining: ${result.remaining}`);
+        
+        // Reload from server
+        await loadDemons();
+        
+        if (result.remaining === 0) {
+          console.log(`✅ Database completely wiped! Ready for fresh import.`);
+        } else {
+          console.error(`⚠️ WARNING: ${result.remaining} demons still remain after nuke!`);
+        }
+      } else {
+        const error = await response.json();
+        console.error('Nuclear reset failed:', error);
+      }
+    } catch (error) {
+      console.error('Error during nuclear reset:', error);
+    }
+  };
+
   const handleUnlock = async () => {
     try {
       const response = await fetch(`${API_URL}/verify-password`, {
@@ -120,9 +285,22 @@ export default function App() {
     }
   };
 
+  const handleToggleLock = () => {
+    if (isUnlocked) {
+      // If currently unlocked, lock it
+      setIsUnlocked(false);
+      setShowAddForm(false);
+      setPassword(''); // Clear password on lock
+    } else {
+      // If currently locked, show password prompt
+      setShowPasswordPrompt(true);
+    }
+  };
+
   const filteredAndSortedDemons = demons
     .filter((demon) => {
       if (filters.difficulty !== 'All' && demon.difficulty !== filters.difficulty) return false;
+      if (filters.rating !== 'All' && demon.rating !== filters.rating) return false;
       if (filters.gauntlet && !demon.gauntlet) return false;
       if (filters.weekly && !demon.weekly) return false;
       if (filters.event && !demon.event) return false;
@@ -156,71 +334,95 @@ export default function App() {
   }
 
   return (
-    <div className="container">
-      {/* Header */}
-      <header className="header">
-        <h1 className="title">
-          <Flame size={48} />
-          Demon List
-        </h1>
-        <p className="subtitle">Track and showcase the hardest demons</p>
-        
-        <div className="header-actions">
-          <button onClick={handleAddButtonClick} className="btn btn-primary">
-            {!isUnlocked && <Lock size={16} />}
-            {showAddForm ? 'Cancel' : 'Add Demon'}
-          </button>
-        </div>
-      </header>
+    <div className="app">
+      {/* Lock/Unlock button - top right */}
+      <button 
+        onClick={handleToggleLock} 
+        className="lock-button"
+        title={isUnlocked ? "Lock (hide admin controls)" : "Unlock (show admin controls)"}
+      >
+        <Lock size={20} />
+      </button>
 
-      {/* Password Prompt */}
-      {showPasswordPrompt && !isUnlocked && (
-        <div className="card">
-          <h2>Enter Password</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-            Only authorized users can add demons.
-          </p>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+      {/* Password prompt modal */}
+      {showPasswordPrompt && (
+        <div className="modal-overlay" onClick={() => setShowPasswordPrompt(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Enter Admin Password</h2>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleUnlock()}
-              placeholder="Enter password"
-              className="form-input"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleUnlock();
+              }}
+              placeholder="Password"
+              autoFocus
+              autoComplete="off"
             />
-            <button onClick={handleUnlock} className="btn btn-primary">
-              Unlock
-            </button>
-            <button
-              onClick={() => setShowPasswordPrompt(false)}
-              className="btn btn-secondary"
-            >
-              Cancel
-            </button>
+            <div className="modal-actions">
+              <button onClick={handleUnlock} className="btn">
+                Unlock
+              </button>
+              <button onClick={() => setShowPasswordPrompt(false)} className="btn btn-secondary">
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Add Form */}
-      {showAddForm && isUnlocked && (
-        <div style={{ marginBottom: '2rem' }}>
-          <AddDemonForm onAdd={handleAddDemon} onCancel={() => setShowAddForm(false)} />
+      <header className="header">
+        <div className="header-content">
+          <Flame className="logo" size={32} />
+          <h1>AxoZap's Demons</h1>
         </div>
-      )}
+        <p className="subtitle">Geometry Dash</p>
+      </header>
 
-      {/* Filters */}
-      <DemonFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSortChange={setSortBy}
-        onSortOrderChange={setSortOrder}
-      />
+      <main className="container">
+        {isUnlocked && (
+          <div className="admin-controls">
+            <button onClick={handleAddButtonClick} className="btn">
+              Add Demon
+            </button>
+          </div>
+        )}
 
-      {/* Demon List */}
-      <DemonList demons={filteredAndSortedDemons} />
+        {/* Add Form */}
+        {showAddForm && isUnlocked && (
+          <div style={{ marginBottom: '2rem' }}>
+            <AddDemonForm onAdd={handleAddDemon} onCancel={() => setShowAddForm(false)} />
+          </div>
+        )}
+
+        {/* Edit Form Modal */}
+        {editingDemon && (
+          <EditDemonForm 
+            demon={editingDemon} 
+            onSave={handleSaveEdit} 
+            onCancel={() => setEditingDemon(null)} 
+          />
+        )}
+
+        {/* Filters */}
+        <DemonFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={setSortBy}
+          onSortOrderChange={setSortOrder}
+        />
+
+        {/* Demon List */}
+        <DemonList 
+          demons={filteredAndSortedDemons} 
+          onDelete={handleDeleteDemon} 
+          onEdit={handleEditDemon}
+          isUnlocked={isUnlocked} 
+        />
+      </main>
     </div>
   );
 }
