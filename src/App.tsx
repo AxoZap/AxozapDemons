@@ -148,90 +148,79 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-950 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="size-12 text-red-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-400">Loading demons...</p>
-        </div>
+      <div className="loading">
+        <Loader2 size={48} />
+        <p>Loading demons...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-950 via-gray-900 to-black">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <header className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Flame className="size-10 text-red-500" />
-              <div>
-                <h1 className="text-4xl font-bold text-white">Demon List</h1>
-                <p className="text-gray-400">Track and showcase the hardest demons</p>
-              </div>
-            </div>
+    <div className="container">
+      {/* Header */}
+      <header className="header">
+        <h1 className="title">
+          <Flame size={48} />
+          Demon List
+        </h1>
+        <p className="subtitle">Track and showcase the hardest demons</p>
+        
+        <div className="header-actions">
+          <button onClick={handleAddButtonClick} className="btn btn-primary">
+            {!isUnlocked && <Lock size={16} />}
+            {showAddForm ? 'Cancel' : 'Add Demon'}
+          </button>
+        </div>
+      </header>
+
+      {/* Password Prompt */}
+      {showPasswordPrompt && !isUnlocked && (
+        <div className="card">
+          <h2>Enter Password</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+            Only authorized users can add demons.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleUnlock()}
+              placeholder="Enter password"
+              className="form-input"
+            />
+            <button onClick={handleUnlock} className="btn btn-primary">
+              Unlock
+            </button>
             <button
-              onClick={handleAddButtonClick}
-              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              onClick={() => setShowPasswordPrompt(false)}
+              className="btn btn-secondary"
             >
-              {!isUnlocked && <Lock className="size-4" />}
-              {showAddForm ? 'Cancel' : 'Add Demon'}
+              Cancel
             </button>
           </div>
-        </header>
-
-        {/* Password Prompt */}
-        {showPasswordPrompt && !isUnlocked && (
-          <div className="mb-8 bg-gray-900/50 backdrop-blur rounded-xl border border-gray-800 p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Enter Password</h2>
-            <p className="text-gray-400 mb-4">Only authorized users can add demons.</p>
-            <div className="flex gap-4">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleUnlock()}
-                placeholder="Enter password"
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-              <button
-                onClick={handleUnlock}
-                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-              >
-                Unlock
-              </button>
-              <button
-                onClick={() => setShowPasswordPrompt(false)}
-                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Add Form */}
-        {showAddForm && isUnlocked && (
-          <div className="mb-8">
-            <AddDemonForm onAdd={handleAddDemon} onCancel={() => setShowAddForm(false)} />
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="mb-6">
-          <DemonFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSortChange={setSortBy}
-            onSortOrderChange={setSortOrder}
-          />
         </div>
+      )}
 
-        {/* Demon List */}
-        <DemonList demons={filteredAndSortedDemons} />
-      </div>
+      {/* Add Form */}
+      {showAddForm && isUnlocked && (
+        <div style={{ marginBottom: '2rem' }}>
+          <AddDemonForm onAdd={handleAddDemon} onCancel={() => setShowAddForm(false)} />
+        </div>
+      )}
+
+      {/* Filters */}
+      <DemonFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={setSortBy}
+        onSortOrderChange={setSortOrder}
+      />
+
+      {/* Demon List */}
+      <DemonList demons={filteredAndSortedDemons} />
     </div>
   );
 }
