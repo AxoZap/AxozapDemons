@@ -62,13 +62,13 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
   };
 
   return (
-    <div className="bg-gray-900/50 backdrop-blur rounded-xl border border-gray-800 p-6">
-      <h2 className="text-2xl font-bold text-white mb-6">Add New Demon</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="card">
+      <h2 style={{ marginBottom: '1.5rem' }}>Add New Demon</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-row">
           {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+          <div className="form-group">
+            <label htmlFor="name" className="form-label">
               Name *
             </label>
             <input
@@ -76,15 +76,15 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="form-input"
               placeholder="Enter demon name"
             />
-            {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+            {errors.name && <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: 'var(--red)' }}>{errors.name}</p>}
           </div>
 
           {/* Difficulty */}
-          <div>
-            <label htmlFor="difficulty" className="block text-sm font-medium text-gray-300 mb-2">
+          <div className="form-group">
+            <label htmlFor="difficulty" className="form-label">
               Difficulty
             </label>
             <select
@@ -93,7 +93,7 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
               onChange={(e) =>
                 setFormData({ ...formData, difficulty: e.target.value as Demon['difficulty'] })
               }
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="form-select"
             >
               <option value="Easy">Easy</option>
               <option value="Medium">Medium</option>
@@ -102,72 +102,62 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
               <option value="Extreme">Extreme</option>
             </select>
           </div>
-
-          {/* Attempts - Only show for Extreme demons */}
-          {formData.difficulty === 'Extreme' && (
-            <div className="md:col-span-2">
-              <label htmlFor="attempts" className="block text-sm font-medium text-gray-300 mb-2">
-                Attempts *
-              </label>
-              <input
-                type="number"
-                id="attempts"
-                min="0"
-                value={formData.attempts}
-                onChange={(e) => setFormData({ ...formData, attempts: parseInt(e.target.value) || 0 })}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-              {errors.attempts && <p className="mt-1 text-sm text-red-400">{errors.attempts}</p>}
-            </div>
-          )}
         </div>
 
+        {/* Attempts - Only show for Extreme demons */}
+        {formData.difficulty === 'Extreme' && (
+          <div className="form-group">
+            <label htmlFor="attempts" className="form-label">
+              Attempts *
+            </label>
+            <input
+              type="number"
+              id="attempts"
+              min="0"
+              value={formData.attempts}
+              onChange={(e) => setFormData({ ...formData, attempts: parseInt(e.target.value) || 0 })}
+              className="form-input"
+            />
+            {errors.attempts && <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: 'var(--red)' }}>{errors.attempts}</p>}
+          </div>
+        )}
+
         {/* Checkboxes */}
-        <div className="flex flex-wrap gap-6">
-          <label className="flex items-center gap-2 cursor-pointer">
+        <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <label className="form-checkbox">
             <input
               type="checkbox"
               checked={formData.gauntlet}
               onChange={(e) => setFormData({ ...formData, gauntlet: e.target.checked })}
-              className="size-4 rounded border-gray-700 bg-gray-800 text-red-600 focus:ring-2 focus:ring-red-500"
             />
-            <span className="text-gray-300">Gauntlet</span>
+            <span>Gauntlet</span>
           </label>
 
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="form-checkbox">
             <input
               type="checkbox"
               checked={formData.weekly}
               onChange={(e) => setFormData({ ...formData, weekly: e.target.checked })}
-              className="size-4 rounded border-gray-700 bg-gray-800 text-red-600 focus:ring-2 focus:ring-red-500"
             />
-            <span className="text-gray-300">Weekly</span>
+            <span>Weekly</span>
           </label>
 
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="form-checkbox">
             <input
               type="checkbox"
               checked={formData.event}
               onChange={(e) => setFormData({ ...formData, event: e.target.checked })}
-              className="size-4 rounded border-gray-700 bg-gray-800 text-red-600 focus:ring-2 focus:ring-red-500"
             />
-            <span className="text-gray-300">Event</span>
+            <span>Event</span>
           </label>
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-          >
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button type="submit" className="btn btn-primary">
             Add Demon
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-          >
+          <button type="button" onClick={onCancel} className="btn btn-secondary">
             Cancel
           </button>
         </div>
