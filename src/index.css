@@ -390,7 +390,26 @@ body {
 
 .header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: .5rem;
+}
+
+.header-content {
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: .5rem;
+  display: flex;
+}
+
+.header-content h1 {
+  color: var(--accent);
+  margin: 0;
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+.logo {
+  color: var(--accent);
 }
 
 .title {
@@ -405,12 +424,16 @@ body {
 }
 
 .subtitle {
-  color: var(--text-secondary);
-  font-size: 1.125rem;
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .btn {
   cursor: pointer;
+  background: var(--accent);
+  color: #fff;
   border: none;
   border-radius: .5rem;
   align-items: center;
@@ -422,6 +445,10 @@ body {
   display: inline-flex;
 }
 
+.btn:hover {
+  background: var(--accent-hover);
+}
+
 .btn-primary {
   background: var(--accent);
   color: #fff;
@@ -431,23 +458,23 @@ body {
   background: var(--accent-hover);
 }
 
+.btn-secondary {
+  background: var(--bg-card);
+  color: #fff;
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+}
+
 .btn-danger {
   background: var(--red);
   color: #fff;
 }
 
 .btn-danger:hover {
-  background: var(--red-hover);
-}
-
-.btn-secondary {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-hover);
+  background: #dc2626;
 }
 
 .btn-sm {
@@ -608,6 +635,62 @@ body {
   margin-top: .25rem;
 }
 
+.delete-btn {
+  cursor: pointer;
+  opacity: .7;
+  background: none;
+  border: none;
+  padding: .25rem;
+  transition: transform .2s;
+}
+
+.delete-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.edit-btn {
+  cursor: pointer;
+  opacity: .7;
+  background: none;
+  border: none;
+  padding: .25rem;
+  transition: transform .2s;
+}
+
+.edit-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.lock-button {
+  background: var(--accent);
+  cursor: pointer;
+  z-index: 100;
+  border: none;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  width: 3rem;
+  height: 3rem;
+  transition: all .3s;
+  display: flex;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  box-shadow: 0 4px 12px #9333ea66;
+}
+
+.lock-button:hover {
+  background: var(--accent-hover);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px #9333ea99;
+}
+
+.lock-button svg {
+  color: #fff;
+}
+
 .filters {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -672,8 +755,35 @@ body {
   padding: 2rem;
 }
 
-.modal h2 {
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.modal h2, .modal-content h2 {
   margin-bottom: 1rem;
+}
+
+.modal input, .modal-content input {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  width: 100%;
+  color: var(--text-primary);
+  border-radius: .5rem;
+  margin-bottom: 1rem;
+  padding: .75rem;
+  font-size: 1rem;
+}
+
+.modal input:focus, .modal-content input:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 .modal-actions {
@@ -683,9 +793,18 @@ body {
 }
 
 .header-actions {
+  flex-wrap: wrap;
   justify-content: center;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+  display: flex;
+}
+
+.admin-controls {
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
   display: flex;
 }
 

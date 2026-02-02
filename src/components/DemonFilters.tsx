@@ -3,6 +3,7 @@ import { Filter, ArrowUpDown } from 'lucide-react';
 interface DemonFiltersProps {
   filters: {
     difficulty: string;
+    rating: string;
     gauntlet: boolean;
     weekly: boolean;
     event: boolean;
@@ -44,6 +45,20 @@ export function DemonFilters({
             <option value="Hard">Hard</option>
             <option value="Insane">Insane</option>
             <option value="Extreme">Extreme</option>
+          </select>
+        </div>
+
+        {/* Rating Filter */}
+        <div className="form-group">
+          <label className="form-label">Rating</label>
+          <select
+            value={filters.rating}
+            onChange={(e) => onFiltersChange({ ...filters, rating: e.target.value })}
+            className="form-select"
+          >
+            <option value="All">All Ratings</option>
+            <option value="Star">⭐ Star</option>
+            <option value="Moon">🌙 Moon</option>
           </select>
         </div>
 
