@@ -1,4 +1,4 @@
-import { Filter, ArrowUpDown } from 'lucide-react';
+import { Filter, ArrowUpDown, Target, Calendar, Zap, Star, Moon } from 'lucide-react';
 
 interface DemonFiltersProps {
   filters: {
@@ -93,34 +93,61 @@ export function DemonFilters({
 
       {/* Checkbox Filters */}
       <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-        <p className="form-label">Show only:</p>
-        <div className="filter-checkboxes">
-          <label className="form-checkbox">
-            <input
-              type="checkbox"
-              checked={filters.gauntlet}
-              onChange={(e) => onFiltersChange({ ...filters, gauntlet: e.target.checked })}
-            />
-            <span>Gauntlet</span>
-          </label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p className="form-label">Show only:</p>
+            <div className="filter-checkboxes">
+              <label className="form-checkbox">
+                <input
+                  type="checkbox"
+                  checked={filters.gauntlet}
+                  onChange={(e) => onFiltersChange({ ...filters, gauntlet: e.target.checked })}
+                />
+                <span>Gauntlet</span>
+              </label>
 
-          <label className="form-checkbox">
-            <input
-              type="checkbox"
-              checked={filters.weekly}
-              onChange={(e) => onFiltersChange({ ...filters, weekly: e.target.checked })}
-            />
-            <span>Weekly</span>
-          </label>
+              <label className="form-checkbox">
+                <input
+                  type="checkbox"
+                  checked={filters.weekly}
+                  onChange={(e) => onFiltersChange({ ...filters, weekly: e.target.checked })}
+                />
+                <span>Weekly</span>
+              </label>
 
-          <label className="form-checkbox">
-            <input
-              type="checkbox"
-              checked={filters.event}
-              onChange={(e) => onFiltersChange({ ...filters, event: e.target.checked })}
-            />
-            <span>Event</span>
-          </label>
+              <label className="form-checkbox">
+                <input
+                  type="checkbox"
+                  checked={filters.event}
+                  onChange={(e) => onFiltersChange({ ...filters, event: e.target.checked })}
+                />
+                <span>Event</span>
+              </label>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: 'var(--text-secondary)', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Target size={14} color="#22d3ee" />
+              <span>Gauntlet</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Calendar size={14} color="#3b82f6" />
+              <span>Weekly</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Zap size={14} color="#eab308" />
+              <span>Event</span>
+            </div>
+            <div style={{ borderLeft: '1px solid var(--border)', height: '14px', margin: '0 0.25rem' }}></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Star size={14} color="#fbbf24" fill="#fbbf24" />
+              <span>Star</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Moon size={14} color="#a78bfa" fill="#a78bfa" />
+              <span>Moon</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

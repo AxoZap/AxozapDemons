@@ -69,9 +69,7 @@ export function DemonList({ demons, onDelete, onEdit, isUnlocked }: DemonListPro
               <th style={{ padding: '1rem 1.5rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Name</th>
               <th style={{ padding: '1rem 1.5rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Difficulty</th>
               <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Rating</th>
-              <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Gauntlet</th>
-              <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Weekly</th>
-              <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Event</th>
+              <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Special</th>
               <th style={{ padding: '1rem 1.5rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Attempts</th>
               {isUnlocked && (
                 <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Delete</th>
@@ -122,34 +120,32 @@ export function DemonList({ demons, onDelete, onEdit, isUnlocked }: DemonListPro
                   </div>
                 </td>
                 <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-                  {demon.gauntlet && (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                      <Target size={20} color="#22d3ee" />
-                      {demonTrophies.get(`${demon.id}-gauntlet`) && (
-                        <Trophy size={16} color="#eab308" fill="#eab308" />
-                      )}
-                    </div>
-                  )}
-                </td>
-                <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-                  {demon.weekly && (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                      <Calendar size={20} color="#3b82f6" />
-                      {demonTrophies.get(`${demon.id}-weekly`) && (
-                        <Trophy size={16} color="#eab308" fill="#eab308" />
-                      )}
-                    </div>
-                  )}
-                </td>
-                <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-                  {demon.event && (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                      <Zap size={20} color="#eab308" />
-                      {demonTrophies.get(`${demon.id}-event`) && (
-                        <Trophy size={16} color="#eab308" fill="#eab308" />
-                      )}
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                    {demon.gauntlet && (
+                      <>
+                        <Target size={20} color="#22d3ee" />
+                        {demonTrophies.get(`${demon.id}-gauntlet`) && (
+                          <Trophy size={16} color="#eab308" fill="#eab308" />
+                        )}
+                      </>
+                    )}
+                    {demon.weekly && (
+                      <>
+                        <Calendar size={20} color="#3b82f6" />
+                        {demonTrophies.get(`${demon.id}-weekly`) && (
+                          <Trophy size={16} color="#eab308" fill="#eab308" />
+                        )}
+                      </>
+                    )}
+                    {demon.event && (
+                      <>
+                        <Zap size={20} color="#eab308" />
+                        {demonTrophies.get(`${demon.id}-event`) && (
+                          <Trophy size={16} color="#eab308" fill="#eab308" />
+                        )}
+                      </>
+                    )}
+                  </div>
                 </td>
                 <td style={{ padding: '1rem 1.5rem' }}>
                   {demon.attempts !== undefined && (
