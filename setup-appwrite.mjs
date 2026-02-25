@@ -17,12 +17,12 @@
  */
 
 const ENDPOINT = process.env.APPWRITE_ENDPOINT || 'https://nyc.cloud.appwrite.io/v1';
-const PROJECT  = process.env.APPWRITE_PROJECT  || '699f8420001f897d627a';
+const PROJECT  = process.env.APPWRITE_PROJECT  || '';
 const API_KEY  = process.env.APPWRITE_API_KEY  || '';
 
-if (!API_KEY) {
-  console.error('❌  Set APPWRITE_API_KEY environment variable first.');
-  console.error('    Example: APPWRITE_API_KEY=standard_xxxx node setup-appwrite.mjs');
+if (!API_KEY || !PROJECT) {
+  console.error('❌  Set APPWRITE_API_KEY and APPWRITE_PROJECT environment variables first.');
+  console.error('    Example: APPWRITE_PROJECT=your-id APPWRITE_API_KEY=standard_xxxx node setup-appwrite.mjs');
   process.exit(1);
 }
 
