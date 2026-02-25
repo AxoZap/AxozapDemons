@@ -43,17 +43,12 @@ export default function App() {
   const loadDemons = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/demons`, {
-        headers: {
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-      });
+      const { ok, data } = await apiCall('/demons');
       
-      if (response.ok) {
-        const data = await response.json();
-        setDemons(data);
+      if (ok) {
+        setDemons(data as Demon[]);
       } else {
-        console.error('Failed to load demons:', await response.text());
+        console.error('Failed to load demons:', data);
       }
     } catch (error) {
       console.error('Error loading demons:', error);
@@ -64,22 +59,16 @@ export default function App() {
 
   const handleAddDemon = async (demon: Omit<Demon, 'id'>) => {
     try {
-      const response = await fetch(`${API_URL}/demons`, {
+      const { ok, data } = await apiCall('/demons', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify({ password, demon }),
+        body: { password, demon },
       });
 
-      if (response.ok) {
-        const newDemon = await response.json();
-        setDemons([...demons, newDemon]);
+      if (ok) {
+        setDemons([...demons, data as Demon]);
         setShowAddForm(false);
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to add demon');
+        alert((data as any)?.error || 'Failed to add demon');
       }
     } catch (error) {
       console.error('Error adding demon:', error);
@@ -98,20 +87,15 @@ export default function App() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/demons/${id}`, {
+      const { ok, data } = await apiCall(`/demons/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify({ password }),
+        body: { password },
       });
 
-      if (response.ok) {
+      if (ok) {
         setDemons(demons.filter(d => d.id !== id));
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to delete demon');
+        alert((data as any)?.error || 'Failed to delete demon');
       }
     } catch (error) {
       console.error('Error deleting demon:', error);
@@ -128,22 +112,17 @@ export default function App() {
 
   const handleSaveEdit = async (updatedDemon: Demon) => {
     try {
-      const response = await fetch(`${API_URL}/demons/${updatedDemon.id}`, {
+      const { ok, data } = await apiCall(`/demons/${updatedDemon.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify({ password, demon: updatedDemon }),
+        body: { password, demon: updatedDemon },
       });
 
-      if (response.ok) {
-        const savedDemon = await response.json();
+      if (ok) {
+        const savedDemon = data as Demon;
         setDemons(demons.map(d => d.id === savedDemon.id ? savedDemon : d));
         setEditingDemon(null);
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to update demon');
+        alert((data as any)?.error || 'Failed to update demon');
       }
     } catch (error) {
       console.error('Error updating demon:', error);
@@ -178,17 +157,13 @@ export default function App() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/demons/clear`, {
+      const { ok, data } = await apiCall('/demons/clear', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify({ password }),
+        body: { password },
       });
 
-      if (response.ok) {
-        const result = await response.json();
+      if (ok) {
+        const result = data as any;
         console.log(`✅ Server cleared ${result.count} demons from database`);
         console.log(`📊 Server reports ${result.remaining} demons remaining`);
         
@@ -201,8 +176,7 @@ export default function App() {
           console.log(`⚠️ Cleared ${result.count} demons, but ${result.remaining} still remain.`);
         }
       } else {
-        const error = await response.json();
-        console.error('Clear failed:', error);
+        console.error('Clear failed:', data);
       }
     } catch (error) {
       console.error('Error clearing demons:', error);
@@ -217,17 +191,13 @@ export default function App() {
 
     try {
       console.log('💥 Starting nuclear reset...');
-      const response = await fetch(`${API_URL}/nuclear-reset`, {
+      const { ok, data } = await apiCall('/nuclear-reset', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify({ password }),
+        body: { password },
       });
 
-      if (response.ok) {
-        const result = await response.json();
+      if (ok) {
+        const result = data as any;
         console.log(`💥 Nuclear reset complete!`);
         console.log(`Nuked: ${result.nuked}, Remaining: ${result.remaining}`);
         
@@ -240,8 +210,7 @@ export default function App() {
           console.error(`⚠️ WARNING: ${result.remaining} demons still remain after nuke!`);
         }
       } else {
-        const error = await response.json();
-        console.error('Nuclear reset failed:', error);
+        console.error('Nuclear reset failed:', data);
       }
     } catch (error) {
       console.error('Error during nuclear reset:', error);
@@ -250,18 +219,12 @@ export default function App() {
 
   const handleUnlock = async () => {
     try {
-      const response = await fetch(`${API_URL}/verify-password`, {
+      const { ok, data } = await apiCall('/verify-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-        body: JSON.stringify({ password }),
+        body: { password },
       });
-
-      const data = await response.json();
       
-      if (data.valid) {
+      if (ok && (data as any)?.valid) {
         setIsUnlocked(true);
         setShowPasswordPrompt(false);
         // Keep password in state for adding demons
@@ -383,6 +346,15 @@ export default function App() {
           <div className="admin-controls">
             <button onClick={handleAddButtonClick} className="btn">
               Add Demon
+            </button>
+            <button onClick={handleBulkImport} className="btn">
+              Bulk Import
+            </button>
+            <button onClick={handleClearAll} className="btn btn-secondary">
+              Clear All
+            </button>
+            <button onClick={handleNuclearReset} className="btn btn-secondary">
+              Nuclear Reset
             </button>
           </div>
         )}

@@ -100,7 +100,7 @@ Electrodyanmix V2	Medium	Star	FALSE	FALSE	FALSE
 Shadow Temple	Hard	Star	FALSE	FALSE	FALSE	
 Double Dash	Hard	Star	FALSE	FALSE	FALSE	
 Forest Temple	Hard	Star	FALSE	FALSE	FALSE	
-Stereo Extremeness	Extreme	Star	FALSE	FALSE	FALSE	65662
+Stereo Extremeness	Extreme	Star	FALSE	FALSE	FALSE	
 Mountain King	Medium	Star	FALSE	FALSE	FALSE	
 xStep v2	Easy	Star	FALSE	FALSE	FALSE	
 Impossible Demon	Easy	Star	FALSE	FALSE	FALSE	
@@ -110,7 +110,7 @@ Make It Funkier	Medium	Star	FALSE	FALSE	FALSE
 Bicycle	Hard	Star	FALSE	FALSE	FALSE	
 Sunfall	Medium	Star	FALSE	FALSE	FALSE	
 Magma Bound	Insane	Star	FALSE	FALSE	FALSE	
-Catalysm	Extreme	Star	FALSE	FALSE	FALSE	6601
+Catalysm	Extreme	Star	FALSE	FALSE	FALSE	
 Sinless Ash 	Easy	Star	TRUE	FALSE	FALSE	
 Change of Scene 	Easy	Star	TRUE	FALSE	FALSE	
 Next Cab Soon 	Easy	Star	TRUE	FALSE	FALSE	
@@ -176,7 +176,13 @@ Asadal	Medium	Star	TRUE	FALSE	FALSE
 Ocean Rush	Medium	Star	TRUE	FALSE	FALSE	
 Wanna Cry	Medium	Star	TRUE	FALSE	FALSE	
 Calypso Blitz	Medium	Star	TRUE	FALSE	FALSE	
-Calypso Blitz	Medium	Star	FALSE	FALSE	FALSE`;
+Calypso Blitz	Medium	Star	FALSE	FALSE	FALSE	
+Clutterfunk V2	Easy	Star	FALSE	FALSE	FALSE	
+Theory Of Every v2	Easy	Star	FALSE	FALSE	FALSE	
+Ultra Violence	Medium	Star	FALSE	FALSE	FALSE	
+Hextec Flow	Easy	Star	FALSE	FALSE	FALSE	
+ClubDrop	Easy	Star	FALSE	FALSE	FALSE	
+Monstrosity	Easy	Star	FALSE	FALSE	FALSE`;
 
 function parseDemonData(data: string) {
   const lines = data.trim().split('\n');
@@ -219,27 +225,22 @@ export async function bulkImportDemons(password: string) {
   console.log('First 5 demons:', demons.slice(0, 5));
   console.log('Last 5 demons:', demons.slice(-5));
   
-  // Get projectId and publicAnonKey from the same place as App.tsx
-  const { projectId, publicAnonKey } = await import('./utils/supabase/info');
+  const { apiCall } = await import('./utils/appwrite/api');
   
-  const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986/demons/bulk`, {
+  const { ok, data } = await apiCall('/demons/bulk', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${publicAnonKey}`,
-    },
-    body: JSON.stringify({ password, demons }),
+    body: { password, demons },
   });
   
-  if (response.ok) {
-    const result = await response.json();
+  if (ok) {
+    const result = data as any;
     console.log(`✅ Successfully imported ${result.count} demons!`);
     console.log(`⚠️ If you see more than ${demons.length} demons in your list, you may need to Clear All first!`);
     return result;
   } else {
-    const error = await response.json();
-    console.error('❌ Import failed:', error);
-    throw new Error(error.error || 'Failed to import demons');
+    const err = data as any;
+    console.error('❌ Import failed:', err);
+    throw new Error(err?.error || 'Failed to import demons');
   }
 }
 
