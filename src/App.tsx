@@ -4,7 +4,7 @@ import { AddDemonForm } from './components/AddDemonForm';
 import { EditDemonForm } from './components/EditDemonForm';
 import { DemonFilters } from './components/DemonFilters';
 import { Flame, Lock, Loader2 } from 'lucide-react';
-import { projectId, publicAnonKey } from './utils/supabase/info';
+import { apiCall } from './utils/appwrite/api';
 
 export interface Demon {
   id: string;
@@ -16,8 +16,6 @@ export interface Demon {
   event: boolean;
   attempts?: number; // Optional now - only for Extreme demons
 }
-
-const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;
 
 export default function App() {
   const [demons, setDemons] = useState<Demon[]>([]);
