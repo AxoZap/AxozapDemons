@@ -30,6 +30,16 @@ export async function apiCall(
     { 'content-type': 'application/json' },
   );
 
+  // If the function itself crashed (e.g. missing env vars), the status may
+  // be 'failed' and the responseBody empty.  Surface a clear error.
+  if (execution.status === 'failed') {
+    return {
+      ok: false,
+      data: { error: 'Function execution failed. Check Appwrite console for details.' },
+      status: execution.responseStatusCode || 500,
+    };
+  }
+
   const ok =
     execution.responseStatusCode >= 200 && execution.responseStatusCode < 300;
 

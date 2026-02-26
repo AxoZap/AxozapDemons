@@ -131,9 +131,49 @@ async function sheetsDelete(rank) {
   });
 }
 
+// ── Body parsing helper ──────────────────────────────────────────────
+function parseBody(req) {
+  // Prefer bodyJson (available in Open Runtimes v4+), then fall back to
+  // parsing bodyText / body manually for older runtimes.
+  try {
+    if (typeof req.bodyJson === 'object' && req.bodyJson !== null) {
+      return req.bodyJson;
+    }
+  } catch { /* bodyJson getter throws if body is not valid JSON */ }
+
+  const raw = req.bodyText || req.body || '';
+  if (!raw) return {};
+
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch {
+    return {};
+  }
+}
+
 // ── Main handler ─────────────────────────────────────────────────────
 export default async ({ req, res, log, error }) => {
   try {
+    const path = req.path;
+    const method = req.method;
+
+    // Parse body early — before any env-var checks that might throw.
+    const body = parseBody(req);
+
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+
+    // ── Health check ───────────────────────────────────────────────
+    if (path === '/health' && method === 'GET') {
+      return res.json({ status: 'ok' });
+    }
+
+    // ── Verify password ────────────────────────────────────────────
+    if (path === '/verify-password' && method === 'POST') {
+      const isValid = body.password === ADMIN_PASSWORD;
+      return res.json({ valid: isValid });
+    }
+
+    // ── Initialise Appwrite client (only needed for DB routes) ─────
     const client = new Client()
       .setEndpoint(
         process.env.APPWRITE_FUNCTION_API_ENDPOINT ||
@@ -148,31 +188,6 @@ export default async ({ req, res, log, error }) => {
     const databases = new Databases(client);
     const databaseId = envOrThrow('DATABASE_ID');
     const collectionId = envOrThrow('COLLECTION_ID');
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
-
-    const path = req.path;
-    const method = req.method;
-
-    // Parse JSON body (may be empty for GET requests)
-    let body = {};
-    if (req.body) {
-      try {
-        body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      } catch {
-        body = {};
-      }
-    }
-
-    // ── Health check ───────────────────────────────────────────────
-    if (path === '/health' && method === 'GET') {
-      return res.json({ status: 'ok' });
-    }
-
-    // ── Verify password ────────────────────────────────────────────
-    if (path === '/verify-password' && method === 'POST') {
-      const isValid = body.password === ADMIN_PASSWORD;
-      return res.json({ valid: isValid });
-    }
 
     // ── Get all demons ─────────────────────────────────────────────
     if (path === '/demons' && method === 'GET') {
