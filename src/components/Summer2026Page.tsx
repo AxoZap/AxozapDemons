@@ -71,11 +71,12 @@ export function Summer2026Page() {
       localStorage.setItem(storageKey, 'true');
       setDisplay(getRealCountdown());
       setStatusText('countdown stabilized');
-      return;
     }
+  }, [isUnlocked]);
 
+  useEffect(() => {
     const verifyPassword = async (candidate: string) => {
-      if (isChecking) {
+      if (isChecking || isUnlocked) {
         return;
       }
 
@@ -122,13 +123,17 @@ export function Summer2026Page() {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter') {
-        void verifyPassword(typedBufferRef.current.trim());
+      if (event.key === 'Escape') {
+        relock();
         return;
       }
 
-      if (event.key === 'Escape') {
-        relock();
+      if (isUnlocked) {
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        void verifyPassword(typedBufferRef.current.trim());
         return;
       }
 
@@ -151,7 +156,7 @@ export function Summer2026Page() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isUnlocked]);
+  }, [isChecking, isUnlocked]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
