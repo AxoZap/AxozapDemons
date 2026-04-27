@@ -4,7 +4,8 @@ import App from './App'
 import { Summer2026Page } from './components/Summer2026Page'
 import './styles/globals.css'
 
-const isSummerCountdownPage = window.location.pathname.replace(/\/+$/, '') === '/Summer2026'
+const normalizedPath = window.location.pathname.replace(/\/+$/, '').toLowerCase()
+const isSummerCountdownPage = normalizedPath === '/summer2026'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
