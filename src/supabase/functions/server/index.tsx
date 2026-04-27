@@ -22,6 +22,7 @@ app.use(
 
 // Admin password (stored securely on server)
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") || "admin";
+const SUMMER_2026_PASSWORD = Deno.env.get("SUMMER_2026_PASSWORD") || "";
 
 // Health check endpoint
 app.get("/make-server-7e6e6986/health", (c) => {
@@ -36,6 +37,24 @@ app.post("/make-server-7e6e6986/verify-password", async (c) => {
     return c.json({ valid: isValid });
   } catch (error) {
     console.error("Error verifying password:", error);
+    return c.json({ error: "Failed to verify password" }, 500);
+  }
+});
+
+// Verify Summer 2026 password
+app.post("/make-server-7e6e6986/summer-2026/unlock", async (c) => {
+  try {
+    const { password } = await c.req.json();
+
+    if (!SUMMER_2026_PASSWORD) {
+      console.error("SUMMER_2026_PASSWORD is not configured");
+      return c.json({ error: "Unlock is not configured" }, 500);
+    }
+
+    const isValid = password === SUMMER_2026_PASSWORD;
+    return c.json({ valid: isValid });
+  } catch (error) {
+    console.error("Error verifying Summer 2026 password:", error);
     return c.json({ error: "Failed to verify password" }, 500);
   }
 });
