@@ -50,6 +50,15 @@ export function Summer2026Page() {
   const [isChecking, setIsChecking] = useState(false);
   const typedBufferRef = useRef('');
 
+  const relock = () => {
+    localStorage.removeItem(storageKey);
+    typedBufferRef.current = '';
+    setTypedBuffer('');
+    setIsUnlocked(false);
+    setDisplay(getScrambledCountdown());
+    setStatusText('');
+  };
+
   useEffect(() => {
     document.title = 'The Final Countdown';
     return () => {
@@ -118,6 +127,11 @@ export function Summer2026Page() {
         return;
       }
 
+      if (event.key === 'Escape') {
+        relock();
+        return;
+      }
+
       if (event.key.length === 1) {
         setTypedBuffer((current) => {
           const next = `${current}${event.key}`.slice(-48);
@@ -125,10 +139,6 @@ export function Summer2026Page() {
           setStatusText(next);
           return next;
         });
-      } else if (event.key === 'Escape') {
-        typedBufferRef.current = '';
-        setTypedBuffer('');
-        setStatusText('');
       } else if (event.key === 'Backspace') {
         setTypedBuffer((current) => {
           const next = current.slice(0, -1);
