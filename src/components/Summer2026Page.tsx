@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './summer2026.css';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
@@ -48,6 +48,7 @@ export function Summer2026Page() {
   ));
   const [statusText, setStatusText] = useState('');
   const [isChecking, setIsChecking] = useState(false);
+  const typedBufferRef = useRef('');
 
   useEffect(() => {
     document.title = 'The Final Countdown';
@@ -95,10 +96,12 @@ export function Summer2026Page() {
         const data = await response.json();
         if (data.valid) {
           setIsUnlocked(true);
+          typedBufferRef.current = '';
           setTypedBuffer('');
           return;
         }
 
+        typedBufferRef.current = '';
         setTypedBuffer('');
         setStatusText('access denied');
       } catch (error) {
@@ -111,22 +114,25 @@ export function Summer2026Page() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter') {
-        void verifyPassword(typedBuffer.trim());
+        void verifyPassword(typedBufferRef.current.trim());
         return;
       }
 
       if (event.key.length === 1) {
         setTypedBuffer((current) => {
           const next = `${current}${event.key}`.slice(-48);
+          typedBufferRef.current = next;
           setStatusText(next);
           return next;
         });
       } else if (event.key === 'Escape') {
+        typedBufferRef.current = '';
         setTypedBuffer('');
         setStatusText('');
       } else if (event.key === 'Backspace') {
         setTypedBuffer((current) => {
           const next = current.slice(0, -1);
+          typedBufferRef.current = next;
           setStatusText(next);
           return next;
         });
