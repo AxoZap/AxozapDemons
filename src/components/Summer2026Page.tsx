@@ -46,7 +46,7 @@ export function Summer2026Page() {
   const [display, setDisplay] = useState(() => (
     localStorage.getItem(storageKey) === 'true' ? getRealCountdown() : getScrambledCountdown()
   ));
-  const [statusText, setStatusText] = useState('awaiting sequence...');
+  const [statusText, setStatusText] = useState('');
   const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
@@ -65,7 +65,12 @@ export function Summer2026Page() {
     }
 
     const verifyPassword = async (candidate: string) => {
-      if (!candidate || isChecking) {
+      if (isChecking) {
+        return;
+      }
+
+      if (!candidate) {
+        setStatusText('');
         return;
       }
 
@@ -116,10 +121,13 @@ export function Summer2026Page() {
           setStatusText(next);
           return next;
         });
+      } else if (event.key === 'Escape') {
+        setTypedBuffer('');
+        setStatusText('');
       } else if (event.key === 'Backspace') {
         setTypedBuffer((current) => {
           const next = current.slice(0, -1);
-          setStatusText(next || 'awaiting sequence...');
+          setStatusText(next);
           return next;
         });
       }
@@ -144,7 +152,7 @@ export function Summer2026Page() {
       <div className="summer-bg-glow summer-bg-glow-b" />
 
       <section className="summer-hero-panel">
-        <p className="summer-eyebrow">Geometry Dash x Tech x Axolotl Signal</p>
+        <p className="summer-eyebrow">The Final Countdown</p>
         <h1>The Final Countdown</h1>
         <p className="summer-intro">It will all come to a rebirth....</p>
 
