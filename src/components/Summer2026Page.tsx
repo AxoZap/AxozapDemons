@@ -6,6 +6,7 @@ const targetTime = new Date('2026-05-14T16:00:00Z').getTime();
 const scrambledChars = '0123456789#?%&@!AXO<>/\\\\[]{}';
 const storageKey = 'summer2026-unlocked';
 const summerUnlockUrl = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986/summer-2026/unlock`;
+const passwordLoreText = "All shall be reborn, the state of limbo shall disgress, it's time for a new era, not one of arrogance. That's what the infernal dragon says.";
 
 function randomChunk(length: number) {
   let output = '';
@@ -141,14 +142,14 @@ export function Summer2026Page() {
         setTypedBuffer((current) => {
           const next = `${current}${event.key}`.slice(-48);
           typedBufferRef.current = next;
-          setStatusText(next);
+          setStatusText(passwordLoreText);
           return next;
         });
       } else if (event.key === 'Backspace') {
         setTypedBuffer((current) => {
           const next = current.slice(0, -1);
           typedBufferRef.current = next;
-          setStatusText(next);
+          setStatusText(next ? passwordLoreText : '');
           return next;
         });
       }
