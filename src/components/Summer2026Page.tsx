@@ -44,9 +44,7 @@ function getScrambledCountdown() {
 export function Summer2026Page() {
   const [typedBuffer, setTypedBuffer] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem(storageKey) === 'true');
-  const [display, setDisplay] = useState(() => (
-    localStorage.getItem(storageKey) === 'true' ? getRealCountdown() : getScrambledCountdown()
-  ));
+  const [display, setDisplay] = useState(() => getRealCountdown());
   const [statusText, setStatusText] = useState('');
   const [isChecking, setIsChecking] = useState(false);
   const typedBufferRef = useRef('');
@@ -56,7 +54,7 @@ export function Summer2026Page() {
     typedBufferRef.current = '';
     setTypedBuffer('');
     setIsUnlocked(false);
-    setDisplay(getScrambledCountdown());
+    setDisplay(getRealCountdown());
     setStatusText('');
   };
 
@@ -161,11 +159,11 @@ export function Summer2026Page() {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setDisplay(isUnlocked ? getRealCountdown() : getScrambledCountdown());
+      setDisplay(getRealCountdown());
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [isUnlocked]);
+  }, []);
 
   return (
     <main className={`summer-page-shell${isUnlocked ? ' unlocked' : ''}`}>
