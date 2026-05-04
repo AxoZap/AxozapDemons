@@ -69,7 +69,7 @@ export function Summer2026Page() {
     if (isUnlocked) {
       localStorage.setItem(storageKey, 'true');
       setDisplay(getRealCountdown());
-      setStatusText('countdown stabilized');
+      setStatusText(passwordLoreText);
     }
   }, [isUnlocked]);
 
@@ -140,14 +140,12 @@ export function Summer2026Page() {
         setTypedBuffer((current) => {
           const next = `${current}${event.key}`.slice(-48);
           typedBufferRef.current = next;
-          setStatusText(passwordLoreText);
           return next;
         });
       } else if (event.key === 'Backspace') {
         setTypedBuffer((current) => {
           const next = current.slice(0, -1);
           typedBufferRef.current = next;
-          setStatusText(next ? passwordLoreText : '');
           return next;
         });
       }
