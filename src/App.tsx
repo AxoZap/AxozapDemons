@@ -18,6 +18,7 @@ export interface Demon {
 }
 
 const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;
+const FINAL_COUNTDOWN_TRIGGER = 190;
 
 export default function App() {
   const [demons, setDemons] = useState<Demon[]>([]);
@@ -297,7 +298,28 @@ export default function App() {
     }
   };
 
-  const filteredAndSortedDemons = demons
+  const hasActiveFilters =
+    filters.difficulty !== 'All' ||
+    filters.rating !== 'All' ||
+    filters.gauntlet ||
+    filters.weekly ||
+    filters.event;
+
+  const demonsInPublicOrder = [...demons].sort((a, b) => parseInt(a.id) - parseInt(b.id));
+  const hiddenCountdownCount =
+    !isUnlocked && demonsInPublicOrder.length >= FINAL_COUNTDOWN_TRIGGER
+      ? Math.max(demonsInPublicOrder.length - FINAL_COUNTDOWN_TRIGGER, 0)
+      : 0;
+  const publicVisibleIds = new Set(
+    demonsInPublicOrder
+      .slice(0, demonsInPublicOrder.length - hiddenCountdownCount)
+      .map((demon) => demon.id)
+  );
+  const visibleDemons = isUnlocked
+    ? demons
+    : demons.filter((demon) => publicVisibleIds.has(demon.id));
+
+  const filteredAndSortedDemons = visibleDemons
     .filter((demon) => {
       if (filters.difficulty !== 'All' && demon.difficulty !== filters.difficulty) return false;
       if (filters.rating !== 'All' && demon.rating !== filters.rating) return false;
@@ -323,6 +345,11 @@ export default function App() {
       
       return sortOrder === 'asc' ? comparison : -comparison;
     });
+  const showFinalCountdownMessage =
+    hiddenCountdownCount > 0 &&
+    !isUnlocked &&
+    !hasActiveFilters &&
+    filteredAndSortedDemons.length === visibleDemons.length;
 
   if (loading) {
     return (
@@ -422,6 +449,19 @@ export default function App() {
           onEdit={handleEditDemon}
           isUnlocked={isUnlocked} 
         />
+
+        {showFinalCountdownMessage && (
+          <div
+            style={{
+              marginTop: '1rem',
+              textAlign: 'center',
+              color: 'var(--text-secondary)',
+              fontSize: '0.95rem',
+            }}
+          >
+            The final countdown will reveal all soon... the final ten
+          </div>
+        )}
       </main>
     </div>
   );
