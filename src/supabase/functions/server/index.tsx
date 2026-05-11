@@ -23,6 +23,7 @@ app.use(
 // Admin password (stored securely on server)
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") || "admin";
 const SUMMER_2026_PASSWORD = Deno.env.get("SUMMER_2026_PASSWORD") || "";
+const SUMMER_2026_COUNTER = Deno.env.get("Counter") || "0";
 
 // Health check endpoint
 app.get("/make-server-7e6e6986/health", (c) => {
@@ -57,6 +58,12 @@ app.post("/make-server-7e6e6986/summer-2026/unlock", async (c) => {
     console.error("Error verifying Summer 2026 password:", error);
     return c.json({ error: "Failed to verify password" }, 500);
   }
+});
+
+app.get("/make-server-7e6e6986/summer-2026/counter", (c) => {
+  const parsedCounter = Number.parseInt(SUMMER_2026_COUNTER, 10);
+  const counter = Number.isFinite(parsedCounter) ? parsedCounter : 0;
+  return c.json({ counter });
 });
 
 // Get all demons

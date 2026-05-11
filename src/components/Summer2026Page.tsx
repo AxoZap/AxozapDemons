@@ -2,49 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import './summer2026.css';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
-const targetTime = new Date('2026-05-14T16:00:00Z').getTime();
-const scrambledChars = '0123456789#?%&@!AXO<>/\\\\[]{}';
 const storageKey = 'summer2026-unlocked';
 const summerUnlockUrl = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986/summer-2026/unlock`;
+const summerCounterUrl = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986/summer-2026/counter`;
 const passwordLoreText = "All shall be reborn, the state of limbo shall disgress, it's time for a new era, not one of arrogance. That's what the infernal dragon says.";
-
-function randomChunk(length: number) {
-  let output = '';
-  for (let i = 0; i < length; i += 1) {
-    output += scrambledChars[Math.floor(Math.random() * scrambledChars.length)];
-  }
-  return output;
-}
-
-function formatPart(value: number) {
-  return String(value).padStart(2, '0');
-}
-
-function getRealCountdown() {
-  const diff = Math.max(0, targetTime - Date.now());
-  const totalSeconds = Math.floor(diff / 1000);
-
-  return {
-    days: String(Math.floor(totalSeconds / 86400)),
-    hours: formatPart(Math.floor((totalSeconds % 86400) / 3600)),
-    minutes: formatPart(Math.floor((totalSeconds % 3600) / 60)),
-    seconds: formatPart(totalSeconds % 60),
-  };
-}
-
-function getScrambledCountdown() {
-  return {
-    days: randomChunk(2 + Math.floor(Math.random() * 2)),
-    hours: randomChunk(2 + Math.floor(Math.random() * 2)),
-    minutes: randomChunk(2 + Math.floor(Math.random() * 2)),
-    seconds: randomChunk(2 + Math.floor(Math.random() * 2)),
-  };
-}
 
 export function Summer2026Page() {
   const [typedBuffer, setTypedBuffer] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem(storageKey) === 'true');
-  const [display, setDisplay] = useState(() => getRealCountdown());
+  const [counterValue, setCounterValue] = useState('0');
   const [statusText, setStatusText] = useState('');
   const [isChecking, setIsChecking] = useState(false);
   const typedBufferRef = useRef('');
@@ -54,7 +20,6 @@ export function Summer2026Page() {
     typedBufferRef.current = '';
     setTypedBuffer('');
     setIsUnlocked(false);
-    setDisplay(getRealCountdown());
     setStatusText('');
   };
 
@@ -68,10 +33,41 @@ export function Summer2026Page() {
   useEffect(() => {
     if (isUnlocked) {
       localStorage.setItem(storageKey, 'true');
-      setDisplay(getRealCountdown());
       setStatusText(passwordLoreText);
     }
   }, [isUnlocked]);
+
+  useEffect(() => {
+    const loadCounter = async () => {
+      try {
+        const response = await fetch(summerCounterUrl, {
+          cache: 'no-store',
+          headers: {
+            Authorization: `Bearer ${publicAnonKey}`,
+          },
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const nextCounter = Number.parseInt(String(data.counter ?? '0'), 10);
+        setCounterValue(String(Number.isFinite(nextCounter) ? nextCounter : 0));
+      } catch (error) {
+        console.error('Error fetching Summer 2026 counter:', error);
+      }
+    };
+
+    void loadCounter();
+    const interval = window.setInterval(() => {
+      void loadCounter();
+    }, 30000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     const verifyPassword = async (candidate: string) => {
@@ -155,14 +151,6 @@ export function Summer2026Page() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isChecking, isUnlocked]);
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setDisplay(getRealCountdown());
-    }, 1000);
-
-    return () => window.clearInterval(interval);
-  }, []);
-
   return (
     <main className={`summer-page-shell${isUnlocked ? ' unlocked' : ''}`}>
       <div className="summer-bg-grid" />
@@ -176,20 +164,8 @@ export function Summer2026Page() {
 
         <div className="summer-countdown-frame" aria-live="polite">
           <div className="summer-timer-card">
-            <span className="summer-timer-value">{display.days}</span>
-            <span className="summer-timer-label">D</span>
-          </div>
-          <div className="summer-timer-card">
-            <span className="summer-timer-value">{display.hours}</span>
-            <span className="summer-timer-label">H</span>
-          </div>
-          <div className="summer-timer-card">
-            <span className="summer-timer-value">{display.minutes}</span>
-            <span className="summer-timer-label">M</span>
-          </div>
-          <div className="summer-timer-card">
-            <span className="summer-timer-value">{display.seconds}</span>
-            <span className="summer-timer-label">S</span>
+            <span className="summer-timer-value">{counterValue}/10</span>
+            <span className="summer-timer-label">The Final Ten</span>
           </div>
         </div>
 
