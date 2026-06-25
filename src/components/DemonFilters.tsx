@@ -1,4 +1,4 @@
-import { Filter, ArrowUpDown, Target, Calendar, Zap, Star, Moon } from 'lucide-react';
+import { Filter, ArrowUpDown, Target, Calendar, Zap, Star, Moon, Search } from 'lucide-react';
 
 interface DemonFiltersProps {
   filters: {
@@ -7,6 +7,8 @@ interface DemonFiltersProps {
     gauntlet: boolean;
     weekly: boolean;
     event: boolean;
+    nonSpecial: boolean;
+    searchQuery: string;
   };
   onFiltersChange: (filters: any) => void;
   sortBy: 'name' | 'attempts' | 'difficulty' | 'order';
@@ -91,6 +93,21 @@ export function DemonFilters({
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div style={{ marginTop: '1.5rem' }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <input
+            type="text"
+            placeholder="Search demons..."
+            value={filters.searchQuery}
+            onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+            className="form-input"
+            style={{ paddingLeft: '2.75rem', width: '100%' }}
+          />
+        </div>
+      </div>
+
       {/* Checkbox Filters */}
       <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -122,6 +139,15 @@ export function DemonFilters({
                   onChange={(e) => onFiltersChange({ ...filters, event: e.target.checked })}
                 />
                 <span>Event</span>
+              </label>
+
+              <label className="form-checkbox">
+                <input
+                  type="checkbox"
+                  checked={filters.nonSpecial}
+                  onChange={(e) => onFiltersChange({ ...filters, nonSpecial: e.target.checked })}
+                />
+                <span>Non-Special</span>
               </label>
             </div>
           </div>

@@ -32,6 +32,8 @@ export default function App() {
     gauntlet: false,
     weekly: false,
     event: false,
+    nonSpecial: false,
+    searchQuery: '',
   });
   const [sortBy, setSortBy] = useState<'name' | 'attempts' | 'difficulty' | 'order'>('order');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -300,9 +302,19 @@ export default function App() {
     .filter((demon) => {
       if (filters.difficulty !== 'All' && demon.difficulty !== filters.difficulty) return false;
       if (filters.rating !== 'All' && demon.rating !== filters.rating) return false;
-      if (filters.gauntlet && !demon.gauntlet) return false;
-      if (filters.weekly && !demon.weekly) return false;
-      if (filters.event && !demon.event) return false;
+      if (filters.searchQuery && !demon.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) return false;
+
+      const hasSpecialFilter = filters.gauntlet || filters.weekly || filters.event || filters.nonSpecial;
+      if (hasSpecialFilter) {
+        const isNonSpecial = !demon.gauntlet && !demon.weekly && !demon.event;
+        let matchesSpecial = false;
+        if (filters.gauntlet && demon.gauntlet) matchesSpecial = true;
+        if (filters.weekly && demon.weekly) matchesSpecial = true;
+        if (filters.event && demon.event) matchesSpecial = true;
+        if (filters.nonSpecial && isNonSpecial) matchesSpecial = true;
+        if (!matchesSpecial) return false;
+      }
+
       return true;
     })
     .sort((a, b) => {
