@@ -8,6 +8,7 @@ interface DemonFiltersProps {
     weekly: boolean;
     event: boolean;
     nonSpecial: boolean;
+    unique: boolean;
     searchQuery: string;
   };
   onFiltersChange: (filters: any) => void;
@@ -148,6 +149,15 @@ export function DemonFilters({
                   onChange={(e) => onFiltersChange({ ...filters, nonSpecial: e.target.checked })}
                 />
                 <span>Non-Special</span>
+              </label>
+
+              <label className="form-checkbox">
+                <input
+                  type="checkbox"
+                  checked={filters.unique}
+                  onChange={(e) => onFiltersChange({ ...filters, unique: e.target.checked })}
+                />
+                <span>Unique</span>
               </label>
             </div>
           </div>

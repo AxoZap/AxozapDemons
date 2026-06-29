@@ -93,7 +93,7 @@ export function DemonList({ demons, onDelete, onEdit, isUnlocked }: DemonListPro
                 <td style={{ padding: '1rem 1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
-                      #{index + 1}
+                      #{demon.placement || index + 1}
                     </span>
                   </div>
                 </td>

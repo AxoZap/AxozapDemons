@@ -15,6 +15,7 @@ export interface Demon {
   weekly: boolean;
   event: boolean;
   attempts?: number; // Optional now - only for Extreme demons
+  placement?: number;
 }
 
 const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;
@@ -33,6 +34,7 @@ export default function App() {
     weekly: false,
     event: false,
     nonSpecial: false,
+    unique: false,
     searchQuery: '',
   });
   const [sortBy, setSortBy] = useState<'name' | 'attempts' | 'difficulty' | 'order'>('order');
@@ -298,8 +300,46 @@ export default function App() {
     }
   };
 
+  // Pre-calculate placements (1-based index when sorted by insertion order/ID)
+  const placementMap = useMemo(() => {
+    const sorted = [...demons].sort((a, b) => parseInt(a.id) - parseInt(b.id));
+    return new Map(sorted.map((d, i) => [d.id, i + 1]));
+  }, [demons]);
+
+  // Pre-calculate duplicates to hide for "Unique" filter
+  const duplicatesToHide = useMemo(() => {
+    const toHide = new Set<string>();
+    if (filters.unique) {
+      const nameGroups = new Map<string, Demon[]>();
+      demons.forEach(d => {
+        const name = d.name.toLowerCase();
+        if (!nameGroups.has(name)) nameGroups.set(name, []);
+        nameGroups.get(name)!.push(d);
+      });
+      
+      nameGroups.forEach(group => {
+        if (group.length > 1) {
+          const normal = group.find(d => !d.gauntlet && !d.weekly && !d.event);
+          if (normal) {
+            group.forEach(d => {
+              if (d !== normal) toHide.add(d.id);
+            });
+          } else {
+            const sortedGroup = [...group].sort((a, b) => parseInt(a.id) - parseInt(b.id));
+            for (let i = 1; i < sortedGroup.length; i++) {
+              toHide.add(sortedGroup[i].id);
+            }
+          }
+        }
+      });
+    }
+    return toHide;
+  }, [demons, filters.unique]);
+
   const filteredAndSortedDemons = demons
+    .map(demon => ({ ...demon, placement: placementMap.get(demon.id) }))
     .filter((demon) => {
+      if (filters.unique && duplicatesToHide.has(demon.id)) return false;
       if (filters.difficulty !== 'All' && demon.difficulty !== filters.difficulty) return false;
       if (filters.rating !== 'All' && demon.rating !== filters.rating) return false;
       if (filters.searchQuery && !demon.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) return false;
