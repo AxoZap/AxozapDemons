@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DemonList } from './components/DemonList';
 import { AddDemonForm } from './components/AddDemonForm';
 import { EditDemonForm } from './components/EditDemonForm';
