@@ -312,9 +312,13 @@ export default function App() {
     if (filters.unique) {
       const nameGroups = new Map<string, Demon[]>();
       demons.forEach(d => {
-        const name = d.name.toLowerCase();
-        if (!nameGroups.has(name)) nameGroups.set(name, []);
-        nameGroups.get(name)!.push(d);
+        const baseName = d.name.toLowerCase()
+          .replace(/\s*-\s*gauntlet/i, '')
+          .replace(/\s*-\s*weekly/i, '')
+          .replace(/\s*-\s*event/i, '')
+          .trim();
+        if (!nameGroups.has(baseName)) nameGroups.set(baseName, []);
+        nameGroups.get(baseName)!.push(d);
       });
       
       nameGroups.forEach(group => {
@@ -466,6 +470,9 @@ export default function App() {
         />
 
         {/* Demon List */}
+        <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+          Showing {filteredAndSortedDemons.length} demon{filteredAndSortedDemons.length !== 1 ? 's' : ''}
+        </div>
         <DemonList 
           demons={filteredAndSortedDemons} 
           onDelete={handleDeleteDemon} 
