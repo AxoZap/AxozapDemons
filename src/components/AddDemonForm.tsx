@@ -15,6 +15,7 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
     weekly: false,
     event: false,
     attempts: 0,
+    videoUrl: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,6 +52,10 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
         demonData.attempts = formData.attempts;
       }
       
+      if (formData.videoUrl.trim()) {
+        demonData.videoUrl = formData.videoUrl.trim();
+      }
+      
       onAdd(demonData);
       setFormData({
         name: '',
@@ -60,6 +65,7 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
         weekly: false,
         event: false,
         attempts: 0,
+        videoUrl: '',
       });
     }
   };
@@ -142,6 +148,21 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
             {errors.attempts && <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: 'var(--red)' }}>{errors.attempts}</p>}
           </div>
         )}
+
+        {/* Video URL */}
+        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+          <label htmlFor="videoUrl" className="form-label">
+            YouTube Video URL (Optional)
+          </label>
+          <input
+            type="url"
+            id="videoUrl"
+            value={formData.videoUrl}
+            onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+            className="form-input"
+            placeholder="https://youtube.com/watch?v=..."
+          />
+        </div>
 
         {/* Checkboxes */}
         <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>

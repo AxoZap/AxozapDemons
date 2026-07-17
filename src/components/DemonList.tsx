@@ -1,5 +1,5 @@
 import { Demon } from '../App';
-import { Trophy, Zap, Calendar, Target, Trash2, Star, Moon, Edit } from 'lucide-react';
+import { Trophy, Zap, Calendar, Target, Trash2, Star, Moon, Edit, Youtube } from 'lucide-react';
 import { useMemo } from 'react';
 
 interface DemonListProps {
@@ -98,7 +98,22 @@ export function DemonList({ demons, onDelete, onEdit, isUnlocked }: DemonListPro
                   </div>
                 </td>
                 <td style={{ padding: '1rem 1.5rem' }}>
-                  <span style={{ color: 'white', fontWeight: 600 }}>{demon.name}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: 'white', fontWeight: 600 }}>{demon.name}</span>
+                    {demon.videoUrl && (
+                      <a 
+                        href={demon.videoUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ color: '#ef4444', display: 'flex', alignItems: 'center', transition: 'opacity 0.2s' }}
+                        title="Watch Video"
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                      >
+                        <Youtube size={20} />
+                      </a>
+                    )}
+                  </div>
                 </td>
                 <td style={{ padding: '1rem 1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

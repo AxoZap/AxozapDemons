@@ -103,6 +103,17 @@ export function EditDemonForm({ demon, onSave, onCancel }: EditDemonFormProps) {
             </div>
           )}
 
+          <div className="form-group">
+            <label className="form-label">YouTube Video URL (Optional)</label>
+            <input
+              type="url"
+              className="form-input"
+              value={formData.videoUrl || ''}
+              onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+              placeholder="https://youtube.com/watch?v=..."
+            />
+          </div>
+
           <div className="modal-actions">
             <button type="submit" className="btn">
               Save Changes

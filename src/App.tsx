@@ -16,6 +16,7 @@ export interface Demon {
   event: boolean;
   attempts?: number; // Optional now - only for Extreme demons
   placement?: number;
+  videoUrl?: string;
 }
 
 const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;
