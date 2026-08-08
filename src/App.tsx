@@ -17,6 +17,7 @@ export interface Demon {
   attempts?: number; // Optional now - only for Extreme demons
   placement?: number;
   videoUrl?: string;
+  levelId?: string; // GD Level ID for GDDL lookups
 }
 
 const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;

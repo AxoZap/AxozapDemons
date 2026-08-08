@@ -24,6 +24,7 @@ app.use(
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") || "admin";
 const SUMMER_2026_PASSWORD = Deno.env.get("SUMMER_2026_PASSWORD") || "";
 const SUMMER_2026_COUNTER = Deno.env.get("Counter") || "0";
+const GDDL_API_TOKEN = Deno.env.get("GDDL_API_TOKEN") || "";
 
 // Health check endpoint
 app.get("/make-server-7e6e6986/health", (c) => {
@@ -308,4 +309,61 @@ app.post("/make-server-7e6e6986/nuclear-reset", async (c) => {
   }
 });
 
+// GDDL proxy endpoint - fetches level tier and user's personal rating/enjoyment
+app.get("/make-server-7e6e6986/gddl/:levelId", async (c) => {
+  const levelId = c.req.param("levelId");
+
+  if (!levelId || isNaN(Number(levelId))) {
+    return c.json({ error: "Invalid level ID" }, 400);
+  }
+
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (GDDL_API_TOKEN) {
+      headers["Authorization"] = `Bearer ${GDDL_API_TOKEN}`;
+    }
+
+    // Fetch level info (tier) and user rating in parallel
+    const [levelRes, ratingRes] = await Promise.allSettled([
+      fetch(`https://gdladder.com/api/level/${levelId}`, { headers }),
+      GDDL_API_TOKEN
+        ? fetch(`https://gdladder.com/api/user/me/rating/${levelId}`, { headers })
+        : Promise.resolve(null),
+    ]);
+
+    let tier: number | null = null;
+    let myTier: number | null = null;
+    let enjoyment: number | null = null;
+
+    // Parse level tier
+    if (levelRes.status === "fulfilled" && levelRes.value && levelRes.value.ok) {
+      const levelData = await levelRes.value.json();
+      // GDDL returns tier as a number 1-39; null/0 means not on the list
+      tier = levelData.tier ?? null;
+      if (tier === 0) tier = null;
+    }
+
+    // Parse user rating
+    if (
+      ratingRes.status === "fulfilled" &&
+      ratingRes.value &&
+      ratingRes.value instanceof Response &&
+      ratingRes.value.ok
+    ) {
+      const ratingData = await ratingRes.value.json();
+      myTier = ratingData.rating ?? null;
+      enjoyment = ratingData.enjoyment ?? null;
+    }
+
+    return c.json({ tier, myTier, enjoyment });
+  } catch (error) {
+    console.error("Error fetching GDDL data:", error);
+    return c.json({ error: "Failed to fetch GDDL data" }, 500);
+  }
+});
+
 Deno.serve(app.fetch);
+

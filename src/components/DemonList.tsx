@@ -1,12 +1,170 @@
 import { Demon } from '../App';
-import { Trophy, Zap, Calendar, Target, Trash2, Star, Moon, Edit, Youtube } from 'lucide-react';
-import { useMemo } from 'react';
+import { Trophy, Zap, Calendar, Target, Trash2, Star, Moon, Edit, Youtube, BarChart2, X, Loader2 } from 'lucide-react';
+import { useMemo, useState, useRef, useEffect } from 'react';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
+
+const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;
+
+interface GddlData {
+  tier: number | null;
+  myTier: number | null;
+  enjoyment: number | null;
+}
+
+interface GddlPopupState {
+  demonId: string;
+  loading: boolean;
+  data: GddlData | null;
+  error: string | null;
+}
 
 interface DemonListProps {
   demons: Demon[];
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
   isUnlocked: boolean;
+}
+
+function GddlButton({ demon }: { demon: Demon }) {
+  const [popup, setPopup] = useState<GddlPopupState | null>(null);
+  const [popupPos, setPopupPos] = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  // Close popup on outside click
+  useEffect(() => {
+    if (!popup) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        popupRef.current && !popupRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) {
+        setPopup(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [popup]);
+
+  if (!demon.levelId || demon.rating === 'Moon') return null;
+
+  const handleClick = async () => {
+    if (popup) {
+      setPopup(null);
+      return;
+    }
+
+    // Position popup near button
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPopupPos({
+        top: rect.bottom + window.scrollY + 8,
+        left: Math.min(rect.left + window.scrollX, window.innerWidth - 260),
+      });
+    }
+
+    setPopup({ demonId: demon.id, loading: true, data: null, error: null });
+
+    try {
+      const res = await fetch(`${API_URL}/gddl/${demon.levelId}`, {
+        headers: { Authorization: `Bearer ${publicAnonKey}` },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to fetch GDDL data' }));
+        setPopup({ demonId: demon.id, loading: false, data: null, error: err.error || 'Failed to fetch' });
+        return;
+      }
+      const data: GddlData = await res.json();
+      setPopup({ demonId: demon.id, loading: false, data, error: null });
+    } catch (e) {
+      setPopup({ demonId: demon.id, loading: false, data: null, error: 'Network error' });
+    }
+  };
+
+  const tierColor = (tier: number | null) => {
+    if (tier === null) return 'var(--text-secondary)';
+    if (tier <= 5) return '#22c55e';
+    if (tier <= 10) return '#eab308';
+    if (tier <= 15) return '#f97316';
+    if (tier <= 20) return '#ef4444';
+    if (tier <= 30) return '#a855f7';
+    return '#dc2626';
+  };
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={handleClick}
+        className="gddl-btn"
+        title="View GDDL Data"
+        aria-label="GDDL Data"
+      >
+        <BarChart2 size={16} />
+        <span>GDDL</span>
+      </button>
+
+      {popup && popupPos && (
+        <div
+          ref={popupRef}
+          className="gddl-popup"
+          style={{ top: popupPos.top, left: popupPos.left }}
+        >
+          <div className="gddl-popup-header">
+            <span className="gddl-popup-title">
+              <BarChart2 size={14} style={{ marginRight: '0.4rem' }} />
+              GDDL Info
+            </span>
+            <button className="gddl-popup-close" onClick={() => setPopup(null)}>
+              <X size={14} />
+            </button>
+          </div>
+
+          {popup.loading && (
+            <div className="gddl-popup-loading">
+              <Loader2 size={20} className="gddl-spin" />
+              <span>Loading...</span>
+            </div>
+          )}
+
+          {popup.error && (
+            <div className="gddl-popup-error">{popup.error}</div>
+          )}
+
+          {popup.data && !popup.loading && (
+            <div className="gddl-popup-body">
+              <div className="gddl-row">
+                <span className="gddl-label">GDDL Tier</span>
+                <span className="gddl-value" style={{ color: tierColor(popup.data.tier) }}>
+                  {popup.data.tier !== null ? `Tier ${popup.data.tier}` : '?'}
+                </span>
+              </div>
+              <div className="gddl-row">
+                <span className="gddl-label">My Rating</span>
+                <span className="gddl-value" style={{ color: tierColor(popup.data.myTier) }}>
+                  {popup.data.myTier !== null ? `Tier ${popup.data.myTier}` : '—'}
+                </span>
+              </div>
+              <div className="gddl-row">
+                <span className="gddl-label">Enjoyment</span>
+                <span className="gddl-value" style={{ color: popup.data.enjoyment !== null ? '#f59e0b' : 'var(--text-secondary)' }}>
+                  {popup.data.enjoyment !== null ? `${popup.data.enjoyment} / 10` : '—'}
+                </span>
+              </div>
+              <a
+                href={`https://gdladder.com/level/${demon.levelId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gddl-link"
+              >
+                View on GDDL ↗
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
 }
 
 export function DemonList({ demons, onDelete, onEdit, isUnlocked }: DemonListProps) {
@@ -71,6 +229,7 @@ export function DemonList({ demons, onDelete, onEdit, isUnlocked }: DemonListPro
               <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Rating</th>
               <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Special</th>
               <th style={{ padding: '1rem 1.5rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Attempts</th>
+              <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>GDDL</th>
               {isUnlocked && (
                 <th style={{ padding: '1rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Delete</th>
               )}
@@ -171,6 +330,9 @@ export function DemonList({ demons, onDelete, onEdit, isUnlocked }: DemonListPro
                       {demon.attempts.toLocaleString()}
                     </span>
                   )}
+                </td>
+                <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
+                  <GddlButton demon={demon} />
                 </td>
                 {isUnlocked && (
                   <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>

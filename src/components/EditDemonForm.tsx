@@ -114,6 +114,17 @@ export function EditDemonForm({ demon, onSave, onCancel }: EditDemonFormProps) {
             />
           </div>
 
+          <div className="form-group">
+            <label className="form-label">GD Level ID (Optional, for GDDL)</label>
+            <input
+              type="text"
+              className="form-input"
+              value={formData.levelId || ''}
+              onChange={(e) => setFormData({ ...formData, levelId: e.target.value })}
+              placeholder="e.g. 12345678"
+            />
+          </div>
+
           <div className="modal-actions">
             <button type="submit" className="btn">
               Save Changes

@@ -16,6 +16,7 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
     event: false,
     attempts: 0,
     videoUrl: '',
+    levelId: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,6 +57,10 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
         demonData.videoUrl = formData.videoUrl.trim();
       }
       
+      if (formData.levelId.trim()) {
+        demonData.levelId = formData.levelId.trim();
+      }
+      
       onAdd(demonData);
       setFormData({
         name: '',
@@ -66,6 +71,7 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
         event: false,
         attempts: 0,
         videoUrl: '',
+        levelId: '',
       });
     }
   };
@@ -161,6 +167,21 @@ export function AddDemonForm({ onAdd, onCancel }: AddDemonFormProps) {
             onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
             className="form-input"
             placeholder="https://youtube.com/watch?v=..."
+          />
+        </div>
+
+        {/* GD Level ID */}
+        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+          <label htmlFor="levelId" className="form-label">
+            GD Level ID (Optional, for GDDL)
+          </label>
+          <input
+            type="text"
+            id="levelId"
+            value={formData.levelId}
+            onChange={(e) => setFormData({ ...formData, levelId: e.target.value })}
+            className="form-input"
+            placeholder="e.g. 12345678"
           />
         </div>
 
