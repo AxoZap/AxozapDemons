@@ -1,0 +1,213 @@
+#include <Geode/Geode.hpp>
+#include <Geode/modify/LevelInfoLayer.hpp>
+#include <Geode/utils/web.hpp>
+#include <Geode/utils/async.hpp>
+#include <Geode/ui/TextInput.hpp>
+#include <Geode/ui/Popup.hpp>
+
+using namespace geode::prelude;
+
+// Helper to map GD Demon enum to string difficulty expected by your database
+std::string getDemonDifficultyString(GJGameLevel* level) {
+	if (!level->m_demon.value()) return "Easy"; // not a demon at all — shouldn't normally hit this path
+
+	switch (level->m_demonDifficulty) {
+		case 3: return "Easy";
+		case 4: return "Medium";
+		case 5: return "Insane";
+		case 6: return "Extreme";
+		case 0:
+		default: return "Hard";
+	}
+}
+
+// Custom Popup to confirm details and add optional Video URL / Attempts / flags
+class SubmitDemonPopup : public geode::Popup {
+protected:
+	GJGameLevel* m_level = nullptr;
+	TextInput* m_videoInput = nullptr;
+	TextInput* m_attemptsInput = nullptr;
+	CCMenuItemToggler* m_weeklyToggle = nullptr;
+	CCMenuItemToggler* m_gauntletToggle = nullptr;
+	CCMenuItemToggler* m_eventToggle = nullptr;
+	// line 33
+	async::TaskHolder<web::WebResponse> m_listener;
+
+	bool init(GJGameLevel* level) {
+		if (!Popup::init(300.f, 280.f)) return false;
+
+		m_level = level;
+		this->setTitle("Send to Demon List");
+
+		float width = m_mainLayer->getContentWidth();
+		float height = m_mainLayer->getContentHeight();
+
+		// 1. Attempts Input
+		auto attemptsLabel = CCLabelBMFont::create("Attempts:", "bigFont.fnt");
+		attemptsLabel->setScale(0.4f);
+		attemptsLabel->setPosition({ width / 2 - 80, height - 45 });
+		m_mainLayer->addChild(attemptsLabel);
+
+		m_attemptsInput = TextInput::create(120.f, "Attempts", "chatFont.fnt");
+		m_attemptsInput->setFilter("0123456789");
+		m_attemptsInput->setPosition({ width / 2 + 40, height - 45 });
+		m_mainLayer->addChild(m_attemptsInput);
+
+		// 2. Video URL Input
+		auto videoLabel = CCLabelBMFont::create("Video URL:", "bigFont.fnt");
+		videoLabel->setScale(0.4f);
+		videoLabel->setPosition({ width / 2 - 80, height - 85 });
+		m_mainLayer->addChild(videoLabel);
+
+		m_videoInput = TextInput::create(160.f, "https://youtu.be/...", "chatFont.fnt");
+		m_videoInput->setPosition({ width / 2 + 40, height - 85 });
+		m_mainLayer->addChild(m_videoInput);
+
+		// 3. Checkboxes: Weekly / Gauntlet / Event
+		float toggleY = height - 130.f;
+		m_weeklyToggle   = makeToggle("Weekly",   toggleY);
+		m_gauntletToggle = makeToggle("Gauntlet", toggleY - 30.f);
+		m_eventToggle    = makeToggle("Event",    toggleY - 60.f);
+
+		// 4. Send Button
+		auto sendBtnBtn = ButtonSprite::create("Send");
+		auto sendBtn = CCMenuItemSpriteExtra::create(
+			sendBtnBtn,
+			this,
+			menu_selector(SubmitDemonPopup::onSend)
+		);
+		sendBtn->setPosition({ width / 2, 25.f });
+		m_buttonMenu->addChild(sendBtn);
+
+		return true;
+	}
+
+	// Small helper: builds a labeled toggle checkbox on the left edge
+	CCMenuItemToggler* makeToggle(const char* label, float y) {
+		float x = 40.f;
+
+		auto lbl = CCLabelBMFont::create(label, "bigFont.fnt");
+		lbl->setScale(0.4f);
+		lbl->setAnchorPoint({ 0.f, 0.5f });
+		lbl->setPosition({ x + 20.f, y });
+		m_mainLayer->addChild(lbl);
+
+		auto toggle = CCMenuItemToggler::createWithStandardSprites(
+			this,
+			menu_selector(SubmitDemonPopup::onToggle),
+																   0.6f
+		);
+		toggle->setPosition({ x, y });
+		m_buttonMenu->addChild(toggle);
+		return toggle;
+	}
+
+	// No-op: we only read toggle state at submit time
+	void onToggle(CCObject*) {}
+
+	void onSend(CCObject*) {
+		std::string apiUrl = Mod::get()->getSettingValue<std::string>("api-url");
+		std::string pubKey = Mod::get()->getSettingValue<std::string>("publishable-key");
+		std::string password = Mod::get()->getSettingValue<std::string>("admin-password");
+
+		if (password.empty()) {
+			FLAlertLayer::create("Error", "Please set your Admin Password in Geode mod settings first!", "OK")->show();
+			return;
+		}
+
+		matjson::Value demonObj;
+		demonObj["name"] = m_level->m_levelName.c_str();
+		demonObj["difficulty"] = getDemonDifficultyString(m_level);
+		demonObj["rating"] = m_level->isPlatformer() ? "Moon" : "Star";
+		demonObj["gauntlet"] = m_gauntletToggle->isToggled();
+		demonObj["weekly"] = m_weeklyToggle->isToggled();
+		demonObj["event"] = m_eventToggle->isToggled();
+		demonObj["levelId"] = std::to_string(m_level->m_levelID.value());
+
+		std::string attStr = m_attemptsInput->getString();
+		if (!attStr.empty()) {
+			demonObj["attempts"] = std::stoi(attStr);
+		}
+
+		std::string vidUrl = m_videoInput->getString();
+		if (!vidUrl.empty()) {
+			demonObj["videoUrl"] = vidUrl;
+		}
+
+		matjson::Value body;
+		body["password"] = password;
+		body["demon"] = demonObj;
+
+		web::WebRequest req;
+		req.header("Content-Type", "application/json");
+		req.header("Authorization", fmt::format("Bearer {}", pubKey));
+		req.header("apikey", pubKey);
+		req.bodyJSON(body);
+
+		// Don't close yet — wait for the response first
+		m_listener.spawn(
+			req.post(fmt::format("{}/demons", apiUrl)),
+						 [this](web::WebResponse res) {
+							 if (res.ok()) {
+								 FLAlertLayer::create("Success!", "Demon added to your list successfully!", "OK")->show();
+							 } else {
+								 auto errText = res.string().unwrapOr("Unknown Error");
+								 FLAlertLayer::create("Error", fmt::format("Failed to add demon: {}", errText), "OK")->show();
+							 }
+							 this->keyBackClicked(); // close the popup now that we're done
+						 }
+		);
+	}
+
+public:
+	static SubmitDemonPopup* create(GJGameLevel* level) {
+		auto ret = new SubmitDemonPopup();
+		if (ret && ret->init(level)) {
+			ret->autorelease();
+			return ret;
+		}
+		CC_SAFE_DELETE(ret);
+		return nullptr;
+	}
+};
+
+// Hook into LevelInfoLayer to inject the green flame button into GD's UI
+class $modify(DemonSyncLevelInfoLayer, LevelInfoLayer) {
+	bool init(GJGameLevel* level, bool challenge) {
+		if (!LevelInfoLayer::init(level, challenge)) return false;
+
+		// Only inject the button if the level is actually a Demon
+		if (level->m_demon.value()) {
+			auto sideMenu = this->getChildByID("left-side-menu");
+			if (!sideMenu) {
+				sideMenu = this->getChildByID("other-menu");
+			}
+
+			if (sideMenu) {
+				// Green flame circle button icon
+				auto iconSpr = CCSprite::create("icon.png"_spr);
+				auto btnSprite = CircleButtonSprite::create(
+					iconSpr,
+					CircleBaseColor::Green,
+					CircleBaseSize::Medium
+				);
+
+				auto syncBtn = CCMenuItemSpriteExtra::create(
+					btnSprite,
+					this,
+					menu_selector(DemonSyncLevelInfoLayer::onSyncDemon)
+				);
+				syncBtn->setID("sync-demon-button"_spr);
+
+				sideMenu->addChild(syncBtn);
+				sideMenu->updateLayout();
+			}
+		}
+
+		return true;
+	}
+
+	void onSyncDemon(CCObject*) {
+		SubmitDemonPopup::create(m_level)->show();
+	}
+};

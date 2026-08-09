@@ -1,0 +1,33 @@
+{
+  "geode": "5.8.2",
+  "gd": {
+    "win": "2.2081"
+  },
+  "id": "axozap.demon_list_sync",
+  "name": "AxoZap Demon Sync",
+  "version": "v1.0.0",
+  "developer": "AxoZap",
+  "description": "Private mod to send completed demons to AxoZap's Demon List website.",
+  "settings": {
+    "api-url": {
+      "name": "Supabase API Endpoint",
+      "type": "string",
+      "default": "https://vtuicybayinxdcbfubyl.supabase.co/functions/v1/make-server-7e6e6986"
+    },
+    "publishable-key": {
+      "name": "Supabase Publishable Key",
+      "type": "string",
+      "default": "sb_publishable_yeq1WvU-wA8onl8j29yPbw_LwITAhNW"
+    },
+    "admin-password": {
+      "name": "Admin Password",
+      "type": "string",
+      "default": ""
+    }
+  },
+  "resources": {
+    "sprites": [
+      "resources/icon.png"
+    ]
+  }
+}
