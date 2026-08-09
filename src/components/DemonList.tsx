@@ -1,6 +1,6 @@
 import { Demon } from '../App';
 import { Trophy, Zap, Calendar, Target, Trash2, Star, Moon, Edit, Youtube, Loader2, ExternalLink } from 'lucide-react';
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;
@@ -22,33 +22,24 @@ function GddlInline({ demon }: { demon: Demon }) {
   const [data, setData] = useState<GddlData | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!demon.levelId || demon.rating === 'Moon') return;
+  const handleFetch = () => {
+    if (!demon.levelId || demon.rating === 'Moon' || loading) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !fetched) {
-          setFetched(true);
-          setLoading(true);
-          fetch(`${API_URL}/gddl/${demon.levelId}`, {
-            headers: { Authorization: `Bearer ${publicAnonKey}` },
-          })
-          .then((r) => r.json())
-          .then((d) => {
-            setData(d);
-            setLoading(false);
-          })
-          .catch(() => setLoading(false));
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [demon.levelId, demon.rating, fetched]);
+    setLoading(true);
+    fetch(`${API_URL}/gddl/${demon.levelId}`, {
+      headers: { Authorization: `Bearer ${publicAnonKey}` },
+    })
+    .then((r) => r.json())
+    .then((d) => {
+      setData(d);
+      setFetched(true);
+      setLoading(false);
+    })
+    .catch(() => {
+      setLoading(false);
+    });
+  };
 
   const tierColor = (tier: number | null) => {
     if (tier === null) return 'var(--text-secondary)';
@@ -63,7 +54,7 @@ function GddlInline({ demon }: { demon: Demon }) {
 
   if (!demon.levelId || demon.rating === 'Moon') {
     return (
-      <div ref={ref} className="gddl-inline gddl-inline-empty" style={{ opacity: 0.5 }}>
+      <div className="gddl-inline gddl-inline-empty" style={{ opacity: 0.5 }}>
       —
       </div>
     );
@@ -71,15 +62,43 @@ function GddlInline({ demon }: { demon: Demon }) {
 
   if (loading) {
     return (
-      <div ref={ref} className="gddl-inline gddl-inline-loading" style={{ display: 'flex', justifyContent: 'center' }}>
+      <div className="gddl-inline gddl-inline-loading" style={{ display: 'flex', justifyContent: 'center' }}>
       <Loader2 size={16} className="gddl-spin" style={{ animation: 'spin 1s linear infinite' }} />
       </div>
     );
   }
 
+  if (!fetched) {
+    return (
+      <button
+      onClick={handleFetch}
+      style={{
+        background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-secondary)',
+            padding: '0.3rem 0.6rem',
+            borderRadius: '6px',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+        e.currentTarget.style.color = '#fff';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+        e.currentTarget.style.color = 'var(--text-secondary)';
+      }}
+      >
+      Load GDDL
+      </button>
+    );
+  }
+
   return (
     <div
-    ref={ref}
     className="gddl-inline"
     style={{
       display: 'inline-flex',
@@ -92,7 +111,7 @@ function GddlInline({ demon }: { demon: Demon }) {
           border: '1px solid var(--border)',
     }}
     >
-    {/* Level Tier (Rounded to whole number) */}
+    {/* Level Tier */}
     <div className="gddl-stat" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
     <span className="gddl-stat-label" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
     Tier
@@ -102,7 +121,7 @@ function GddlInline({ demon }: { demon: Demon }) {
     </span>
     </div>
 
-    {/* Personal Rating (Rounded to whole number) */}
+    {/* Personal Rating */}
     <div className="gddl-stat" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
     <span className="gddl-stat-label" style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
     Mine
