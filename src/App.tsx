@@ -41,6 +41,7 @@ export default function App() {
   });
   const [sortBy, setSortBy] = useState<'name' | 'attempts' | 'difficulty' | 'order'>('order');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showFilteredRanks, setShowFilteredRanks] = useState(false);
 
   // Load demons from database on mount
   useEffect(() => {
@@ -476,10 +477,13 @@ export default function App() {
           Showing {filteredAndSortedDemons.length} demon{filteredAndSortedDemons.length !== 1 ? 's' : ''}
         </div>
         <DemonList 
-          demons={filteredAndSortedDemons} 
+          demons={filteredAndSortedDemons}
+          allDemons={demons}
           onDelete={handleDeleteDemon} 
           onEdit={handleEditDemon}
-          isUnlocked={isUnlocked} 
+          isUnlocked={isUnlocked}
+          showFilteredRanks={showFilteredRanks}
+          onToggleRanks={() => setShowFilteredRanks(r => !r)}
         />
       </main>
     </div>
