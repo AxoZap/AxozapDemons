@@ -1,9 +1,7 @@
 import { Demon } from '../App';
 import { Trophy, Zap, Calendar, Target, Trash2, Star, Moon, Edit, Youtube, Loader2, ExternalLink, Hash } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
-
-const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;
+const API_URL = "https://axozap-backend.peteystillwell.workers.dev/make-server-7e6e6986";
 
 interface GddlData {
   tier: number | null;
@@ -30,9 +28,7 @@ function GddlInline({ demon }: { demon: Demon }) {
   const handleFetch = () => {
     if (!demon.levelId || demon.rating === 'Moon' || loading) return;
     setLoading(true);
-    fetch(`${API_URL}/gddl/${demon.levelId}`, {
-      headers: { Authorization: `Bearer ${publicAnonKey}` },
-    })
+    fetch(`${API_URL}/gddl/${demon.levelId}`)
       .then((r) => r.json())
       .then((d) => { setData(d); setFetched(true); setLoading(false); })
       .catch(() => setLoading(false));

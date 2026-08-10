@@ -10,12 +10,12 @@
   "description": "Private mod to send completed demons to AxoZap's Demon List website.",
   "settings": {
     "api-url": {
-      "name": "Supabase API Endpoint",
+      "name": "Cloudflare Worker API Endpoint",
       "type": "string",
-      "default": "https://vtuicybayinxdcbfubyl.supabase.co/functions/v1/make-server-7e6e6986"
+      "default": "https://axozap-backend.peteystillwell.workers.dev/make-server-7e6e6986"
     },
     "publishable-key": {
-      "name": "Supabase Publishable Key",
+      "name": "Cloudflare Worker API Key",
       "type": "string",
       "default": "sb_publishable_yeq1WvU-wA8onl8j29yPbw_LwITAhNW"
     },
