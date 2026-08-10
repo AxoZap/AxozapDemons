@@ -3,4 +3,5 @@ node_modules/
 build/
 .codex
 .codex/
-GD/build-win
+GD/build-win/
+worker/node_modules/

@@ -168,28 +168,89 @@ let cachedGddlUserId: string | number | null = null;
 
 app.get("/make-server-7e6e6986/gddl/:levelId", async (c) => {
 	const levelId = c.req.param("levelId");
-	if (!levelId || isNaN(Number(levelId))) return c.json({ error: "Invalid level ID" }, 400);
-
-	const token = c.env.GDDL_API_TOKEN || "";
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AxoZapDemonsList/1.0",
-	};
-	if (token) {
-		headers["Authorization"] = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+	if (!levelId || isNaN(Number(levelId))) {
+		return c.json({ error: "Invalid level ID" }, 400);
 	}
 
-	const levelRes = await fetch(`https://gdladder.com/api/level/${levelId}`, { headers });
-	let tier: number | null = null;
-	let avgEnjoyment: number | null = null;
+	try {
+		// Access environment secret from Cloudflare context (c.env)
+		const GDDL_API_TOKEN = c.env.GDDL_API_TOKEN || "";
 
-	if (levelRes.ok) {
-		const d = (await levelRes.json()) as any;
-		tier = d.Rating ?? d.rating ?? null;
-		avgEnjoyment = d.Enjoyment ?? d.enjoyment ?? null;
+		const headers: Record<string, string> = {
+			"Content-Type": "application/json",
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AxoZapDemonsList/1.0",
+		};
+
+		if (GDDL_API_TOKEN) {
+			headers["Authorization"] = GDDL_API_TOKEN.startsWith("Bearer ")
+			? GDDL_API_TOKEN
+			: `Bearer ${GDDL_API_TOKEN}`;
+		}
+
+		// 1. Fetch public level info
+		const levelRes = await fetch(`https://gdladder.com/api/level/${levelId}`, { headers });
+
+		let tier: number | null = null;
+		let avgEnjoyment: number | null = null;
+		let myTier: number | null = null;
+		let enjoyment: number | null = null;
+
+		if (levelRes.ok) {
+			try {
+				const d = await levelRes.json();
+				tier = d.Rating ?? d.rating ?? null;
+				avgEnjoyment = d.Enjoyment ?? d.enjoyment ?? null;
+			} catch (e) {
+				console.error(`⚠️ Level ${levelId} response was not valid JSON`);
+			}
+		}
+
+		// 2. Fetch user's personal rating for this exact level
+		if (GDDL_API_TOKEN) {
+			// Step A: Dynamically resolve User ID if not already cached
+			if (!cachedGddlUserId) {
+				try {
+					const meRes = await fetch("https://gdladder.com/api/user/me", { headers });
+					if (meRes.ok) {
+						const meData = await meRes.json();
+						cachedGddlUserId = meData.ID ?? meData.id ?? meData.userID ?? null;
+						console.log("👤 Resolved GDDL User ID from /api/user/me:", cachedGddlUserId);
+					} else {
+						console.error(`⚠️ /api/user/me failed [HTTP ${meRes.status}]`);
+					}
+				} catch (err) {
+					console.error("⚠️ Error calling /api/user/me:", err);
+				}
+			}
+
+			// Step B: Direct lookup for this level ID
+			if (cachedGddlUserId) {
+				const subRes = await fetch(
+					`https://gdladder.com/api/user/${cachedGddlUserId}/submissions/${levelId}`,
+					{ headers }
+				);
+
+				if (subRes.ok) {
+					try {
+						const match = await subRes.json();
+						myTier = match.Rating ?? match.rating ?? match.Tier ?? match.tier ?? null;
+						enjoyment = match.Enjoyment ?? match.enjoyment ?? null;
+					} catch (e) {
+						console.error(`⚠️ Failed to parse submission JSON for level ${levelId}`);
+					}
+				} else if (subRes.status === 404) {
+					console.log(`ℹ️ Level ${levelId} has no rating submission by user ${cachedGddlUserId}`);
+				} else {
+					console.error(`⚠️ Fetching level submission failed with HTTP ${subRes.status}`);
+				}
+			}
+		}
+
+		return c.json({ tier, avgEnjoyment, myTier, enjoyment });
+	} catch (error) {
+		console.error("❌ Exception in GDDL handler:", error);
+		return c.json({ error: "Failed to fetch GDDL data" }, 500);
 	}
-
-	return c.json({ tier, avgEnjoyment });
 });
 
 export default app;
