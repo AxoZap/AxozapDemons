@@ -153,24 +153,6 @@ export default function App() {
     }
   };
 
-  const handleBulkImport = async () => {
-    if (!isUnlocked) {
-      alert('You must be unlocked to import demons!');
-      return;
-    }
-
-    const { bulkImportDemons } = await import('./import-demons');
-
-    try {
-      const result = await bulkImportDemons(password);
-      alert(`✅ Successfully imported ${result.count} demons!`);
-      await loadDemons();
-    } catch (error) {
-      console.error('Error importing demons:', error);
-      alert('Failed to import demons. Please try again.');
-    }
-  };
-
   const handleClearAll = async () => {
     if (!isUnlocked) {
       alert('You must be unlocked to clear demons!');
