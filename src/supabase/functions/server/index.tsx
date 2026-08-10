@@ -3,10 +3,11 @@ import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import * as kv from "./kv_store.tsx";
 import { appendDemonToSheet, updateDemonInSheet, deleteDemonFromSheet } from "./sheets.tsx";
+
 const app = new Hono();
 
 // Enable logger
-app.use('*', logger(console.log));
+app.use("*", logger(console.log));
 
 // Enable CORS for all routes and methods
 app.use(
@@ -20,11 +21,8 @@ app.use(
   }),
 );
 
-// Admin password (stored securely on server)
+// Environment variables
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") || "admin";
-const SUMMER_2026_PASSWORD = Deno.env.get("SUMMER_2026_PASSWORD") || "";
-const SUMMER_2026_COUNTER = Deno.env.get("Counter") || "0";
-const GDDL_API_TOKEN = Deno.env.get("GDDL_API_TOKEN") || "";
 
 // Health check endpoint
 app.get("/make-server-7e6e6986/health", (c) => {
@@ -43,36 +41,12 @@ app.post("/make-server-7e6e6986/verify-password", async (c) => {
   }
 });
 
-// Verify Summer 2026 password
-app.post("/make-server-7e6e6986/summer-2026/unlock", async (c) => {
-  try {
-    const { password } = await c.req.json();
-
-    if (!SUMMER_2026_PASSWORD) {
-      console.error("SUMMER_2026_PASSWORD is not configured");
-      return c.json({ error: "Unlock is not configured" }, 500);
-    }
-
-    const isValid = password === SUMMER_2026_PASSWORD;
-    return c.json({ valid: isValid });
-  } catch (error) {
-    console.error("Error verifying Summer 2026 password:", error);
-    return c.json({ error: "Failed to verify password" }, 500);
-  }
-});
-
-app.get("/make-server-7e6e6986/summer-2026/counter", (c) => {
-  const parsedCounter = Number.parseInt(SUMMER_2026_COUNTER, 10);
-  const counter = Number.isFinite(parsedCounter) ? parsedCounter : 0;
-  return c.json({ counter });
-});
-
 // Get all demons
 app.get("/make-server-7e6e6986/demons", async (c) => {
   try {
     const demons = await kv.getByPrefix("demon:");
     // Sort by ID to maintain insertion order
-    const sortedDemons = demons.sort((a, b) => {
+    const sortedDemons = demons.sort((a: any, b: any) => {
       const idA = parseInt(a.id);
       const idB = parseInt(b.id);
       return idA - idB;
@@ -88,25 +62,19 @@ app.get("/make-server-7e6e6986/demons", async (c) => {
 app.post("/make-server-7e6e6986/demons", async (c) => {
   try {
     const { password, demon } = await c.req.json();
-    
-    // Verify password
+
     if (password !== ADMIN_PASSWORD) {
       return c.json({ error: "Invalid password" }, 401);
     }
-    
-    // Generate ID and save
+
     const id = Date.now().toString();
     const demonWithId = { ...demon, id };
     await kv.set(`demon:${id}`, demonWithId);
-    
-    // Fire-and-forget: Sync to Google Sheet in the background
-    appendDemonToSheet(demonWithId).then(result => {
-      console.log('🔥 Background sync to Sheets completed:', result);
-    }).catch(error => {
-      console.error('❌ Background sync to Sheets failed:', error);
-    });
-    
-    // Return immediately without waiting for sheets sync
+
+    appendDemonToSheet(demonWithId)
+    .then((result) => console.log("🔥 Background sync to Sheets completed:", result))
+    .catch((error) => console.error("❌ Background sync to Sheets failed:", error));
+
     return c.json(demonWithId);
   } catch (error) {
     console.error("Error adding demon:", error);
@@ -119,37 +87,25 @@ app.delete("/make-server-7e6e6986/demons/:id", async (c) => {
   try {
     const id = c.req.param("id");
     const { password } = await c.req.json();
-    
-    // Verify password
+
     if (password !== ADMIN_PASSWORD) {
       return c.json({ error: "Invalid password" }, 401);
     }
-    
-    // Get all demons to find the rank before deleting
+
     const allDemons = await kv.getByPrefix("demon:");
-    const sortedDemons = allDemons.sort((a, b) => {
-      const idA = parseInt(a.id);
-      const idB = parseInt(b.id);
-      return idA - idB;
-    });
-    
-    // Find the rank (position in sorted list, 1-indexed)
-    const rank = sortedDemons.findIndex(d => d.id === id) + 1;
+    const sortedDemons = allDemons.sort((a: any, b: any) => parseInt(a.id) - parseInt(b.id));
+
+    const rank = sortedDemons.findIndex((d: any) => d.id === id) + 1;
     console.log(`🗑️ Deleting demon with ID ${id} at rank ${rank}`);
-    
-    // Delete the demon
+
     await kv.del(`demon:${id}`);
-    
-    // Fire-and-forget: Delete from Google Sheet in the background
+
     if (rank > 0) {
-      deleteDemonFromSheet(rank).then(result => {
-        console.log('🔥 Background delete from Sheets completed:', result);
-      }).catch(error => {
-        console.error('❌ Background delete from Sheets failed:', error);
-      });
+      deleteDemonFromSheet(rank)
+      .then((result) => console.log("🔥 Background delete from Sheets completed:", result))
+      .catch((error) => console.error("❌ Background delete from Sheets failed:", error));
     }
-    
-    // Return immediately without waiting for sheets sync
+
     return c.json({ success: true });
   } catch (error) {
     console.error("Error deleting demon:", error);
@@ -162,38 +118,26 @@ app.put("/make-server-7e6e6986/demons/:id", async (c) => {
   try {
     const id = c.req.param("id");
     const { password, demon } = await c.req.json();
-    
-    // Verify password
+
     if (password !== ADMIN_PASSWORD) {
       return c.json({ error: "Invalid password" }, 401);
     }
-    
-    // Get all demons to find the rank
+
     const allDemons = await kv.getByPrefix("demon:");
-    const sortedDemons = allDemons.sort((a, b) => {
-      const idA = parseInt(a.id);
-      const idB = parseInt(b.id);
-      return idA - idB;
-    });
-    
-    // Find the rank (position in sorted list, 1-indexed)
-    const rank = sortedDemons.findIndex(d => d.id === id) + 1;
+    const sortedDemons = allDemons.sort((a: any, b: any) => parseInt(a.id) - parseInt(b.id));
+
+    const rank = sortedDemons.findIndex((d: any) => d.id === id) + 1;
     console.log(`✏️ Updating demon with ID ${id} at rank ${rank}`);
-    
-    // Update the demon (preserve the ID)
+
     const updatedDemon = { ...demon, id };
     await kv.set(`demon:${id}`, updatedDemon);
-    
-    // Fire-and-forget: Update in Google Sheet in the background
+
     if (rank > 0) {
-      updateDemonInSheet(updatedDemon, rank).then(result => {
-        console.log('🔥 Background update to Sheets completed:', result);
-      }).catch(error => {
-        console.error('❌ Background update to Sheets failed:', error);
-      });
+      updateDemonInSheet(updatedDemon, rank)
+      .then((result) => console.log("🔥 Background update to Sheets completed:", result))
+      .catch((error) => console.error("❌ Background update to Sheets failed:", error));
     }
-    
-    // Return immediately without waiting for sheets sync
+
     return c.json(updatedDemon);
   } catch (error) {
     console.error("Error updating demon:", error);
@@ -205,26 +149,22 @@ app.put("/make-server-7e6e6986/demons/:id", async (c) => {
 app.post("/make-server-7e6e6986/demons/bulk", async (c) => {
   try {
     const { password, demons } = await c.req.json();
-    
-    // Verify password
+
     if (password !== ADMIN_PASSWORD) {
       return c.json({ error: "Invalid password" }, 401);
     }
-    
+
     console.log(`📦 Importing ${demons.length} demons...`);
-    
-    // Import all demons with sequential IDs to preserve order
+
     const importedDemons = [];
     for (let i = 0; i < demons.length; i++) {
-      // Use sequential ID: 1, 2, 3, etc. - this preserves spreadsheet order
       const id = (i + 1).toString();
       const demonWithId = { ...demons[i], id };
       await kv.set(`demon:${id}`, demonWithId);
       importedDemons.push(demonWithId);
     }
-    
+
     console.log(`✅ Imported ${importedDemons.length} demons with sequential IDs`);
-    
     return c.json({ count: importedDemons.length, demons: importedDemons });
   } catch (error) {
     console.error("Error bulk importing demons:", error);
@@ -236,28 +176,21 @@ app.post("/make-server-7e6e6986/demons/bulk", async (c) => {
 app.delete("/make-server-7e6e6986/demons/clear", async (c) => {
   try {
     const { password } = await c.req.json();
-    
-    // Verify password
+
     if (password !== ADMIN_PASSWORD) {
       return c.json({ error: "Invalid password" }, 401);
     }
-    
-    // Get all demons
+
     const allDemons = await kv.getByPrefix("demon:");
     console.log(`🗑️ Found ${allDemons.length} demons to delete`);
-    
-    // Delete all demons
+
     const keys = allDemons.map((demon: any) => `demon:${demon.id}`);
     if (keys.length > 0) {
-      console.log(`🗑️ Deleting keys:`, keys.slice(0, 5), '...'); // Show first 5
       await kv.mdel(keys);
       console.log(`✅ Deleted ${keys.length} demons from database`);
     }
-    
-    // Verify deletion
+
     const remaining = await kv.getByPrefix("demon:");
-    console.log(`📊 Remaining demons after deletion: ${remaining.length}`);
-    
     return c.json({ success: true, count: keys.length, remaining: remaining.length });
   } catch (error) {
     console.error("Error clearing demons:", error);
@@ -265,23 +198,18 @@ app.delete("/make-server-7e6e6986/demons/clear", async (c) => {
   }
 });
 
-// NUCLEAR OPTION: Reset everything (password protected, no confirmation)
+// Reset everything
 app.post("/make-server-7e6e6986/nuclear-reset", async (c) => {
   try {
     const { password } = await c.req.json();
-    
-    // Verify password
+
     if (password !== ADMIN_PASSWORD) {
       return c.json({ error: "Invalid password" }, 401);
     }
-    
+
     console.log(`💥 NUCLEAR RESET INITIATED`);
-    
-    // Get all demons
     const allDemons = await kv.getByPrefix("demon:");
-    console.log(`🗑️ Found ${allDemons.length} demons to NUKE`);
-    
-    // Delete them ONE BY ONE to ensure they're really gone
+
     let deleted = 0;
     for (const demon of allDemons) {
       try {
@@ -291,17 +219,8 @@ app.post("/make-server-7e6e6986/nuclear-reset", async (c) => {
         console.error(`Failed to delete demon:${demon.id}`, err);
       }
     }
-    
-    console.log(`💥 NUKED ${deleted} demons from database`);
-    
-    // Verify deletion
+
     const remaining = await kv.getByPrefix("demon:");
-    console.log(`📊 Remaining after nuke: ${remaining.length}`);
-    
-    if (remaining.length > 0) {
-      console.error(`⚠️ WARNING: ${remaining.length} demons still exist!`, remaining.map(d => d.id));
-    }
-    
     return c.json({ success: true, nuked: deleted, remaining: remaining.length });
   } catch (error) {
     console.error("Error during nuclear reset:", error);
@@ -309,61 +228,93 @@ app.post("/make-server-7e6e6986/nuclear-reset", async (c) => {
   }
 });
 
-// GDDL proxy endpoint - fetches level tier and user's personal rating/enjoyment
+// In-memory cache for user ID to avoid repeating /api/user/me calls
+let cachedGddlUserId: string | number | null = null;
+
 app.get("/make-server-7e6e6986/gddl/:levelId", async (c) => {
   const levelId = c.req.param("levelId");
-
   if (!levelId || isNaN(Number(levelId))) {
     return c.json({ error: "Invalid level ID" }, 400);
   }
 
   try {
+    const GDDL_API_TOKEN = Deno.env.get("GDDL_API_TOKEN") || "";
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AxoZapDemonsList/1.0",
     };
 
     if (GDDL_API_TOKEN) {
-      headers["Authorization"] = `Bearer ${GDDL_API_TOKEN}`;
+      headers["Authorization"] = GDDL_API_TOKEN.startsWith("Bearer ")
+      ? GDDL_API_TOKEN
+      : `Bearer ${GDDL_API_TOKEN}`;
     }
 
-    // Fetch level info (tier) and user rating in parallel
-    const [levelRes, ratingRes] = await Promise.allSettled([
-      fetch(`https://gdladder.com/api/level/${levelId}`, { headers }),
-      GDDL_API_TOKEN
-        ? fetch(`https://gdladder.com/api/user/me/rating/${levelId}`, { headers })
-        : Promise.resolve(null),
-    ]);
+    // 1. Fetch public level info (LevelDTO: Rating, Enjoyment, RatingCount, EnjoymentCount, etc.)
+    const levelRes = await fetch(`https://gdladder.com/api/level/${levelId}`, { headers });
 
     let tier: number | null = null;
+    let avgEnjoyment: number | null = null;
     let myTier: number | null = null;
     let enjoyment: number | null = null;
 
-    // Parse level tier
-    if (levelRes.status === "fulfilled" && levelRes.value && levelRes.value.ok) {
-      const levelData = await levelRes.value.json();
-      // GDDL returns tier as a number 1-39; null/0 means not on the list
-      tier = levelData.tier ?? null;
-      if (tier === 0) tier = null;
+    if (levelRes.ok) {
+      try {
+        const d = await levelRes.json();
+        tier = d.Rating ?? d.rating ?? null;
+        avgEnjoyment = d.Enjoyment ?? d.enjoyment ?? null;
+      } catch (e) {
+        console.error(`⚠️ Level ${levelId} response was not valid JSON`);
+      }
     }
 
-    // Parse user rating
-    if (
-      ratingRes.status === "fulfilled" &&
-      ratingRes.value &&
-      ratingRes.value instanceof Response &&
-      ratingRes.value.ok
-    ) {
-      const ratingData = await ratingRes.value.json();
-      myTier = ratingData.rating ?? null;
-      enjoyment = ratingData.enjoyment ?? null;
+    // 2. Fetch user's personal rating for this exact level
+    if (GDDL_API_TOKEN) {
+      // Step A: Dynamically resolve User ID if not already cached
+      if (!cachedGddlUserId) {
+        try {
+          const meRes = await fetch("https://gdladder.com/api/user/me", { headers });
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            cachedGddlUserId = meData.ID ?? meData.id ?? meData.userID ?? null;
+            console.log("👤 Resolved GDDL User ID from /api/user/me:", cachedGddlUserId);
+          } else {
+            console.error(`⚠️ /api/user/me failed [HTTP ${meRes.status}]`);
+          }
+        } catch (err) {
+          console.error("⚠️ Error calling /api/user/me:", err);
+        }
+      }
+
+      // Step B: Direct lookup for this level ID
+      if (cachedGddlUserId) {
+        const subRes = await fetch(
+          `https://gdladder.com/api/user/${cachedGddlUserId}/submissions/${levelId}`,
+          { headers }
+        );
+
+        if (subRes.ok) {
+          try {
+            const match = await subRes.json();
+            myTier = match.Rating ?? match.rating ?? match.Tier ?? match.tier ?? null;
+            enjoyment = match.Enjoyment ?? match.enjoyment ?? null;
+          } catch (e) {
+            console.error(`⚠️ Failed to parse submission JSON for level ${levelId}`);
+          }
+        } else if (subRes.status === 404) {
+          console.log(`ℹ️ Level ${levelId} has no rating submission by user ${cachedGddlUserId}`);
+        } else {
+          console.error(`⚠️ Fetching level submission failed with HTTP ${subRes.status}`);
+        }
+      }
     }
 
-    return c.json({ tier, myTier, enjoyment });
+    return c.json({ tier, avgEnjoyment, myTier, enjoyment });
   } catch (error) {
-    console.error("Error fetching GDDL data:", error);
+    console.error("❌ Exception in GDDL handler:", error);
     return c.json({ error: "Failed to fetch GDDL data" }, 500);
   }
 });
 
 Deno.serve(app.fetch);
-

@@ -21,23 +21,23 @@ async function getAccessToken(): Promise<string> {
 
     console.log('✅ Service account found, parsing JSON...');
     const serviceAccount = JSON.parse(serviceAccountJson.trim());
-    
+
     // Use googleapis library to handle authentication
     const { google } = await import('npm:googleapis@140');
-    
+
     const auth = new google.auth.JWT({
       email: serviceAccount.client_email,
       key: serviceAccount.private_key,
       scopes: SCOPES,
     });
-    
+
     console.log('🔐 Getting access token from JWT...');
     const tokenResponse = await auth.getAccessToken();
-    
+
     if (!tokenResponse.token) {
       throw new Error('Failed to get access token');
     }
-    
+
     console.log('✅ Access token obtained!');
     return tokenResponse.token;
   } catch (error) {
@@ -50,7 +50,7 @@ async function getAccessToken(): Promise<string> {
 export async function appendDemonToSheet(demon: Demon): Promise<string> {
   try {
     console.log('📊 Starting Google Sheets sync for demon:', demon.name);
-    
+
     const sheetId = Deno.env.get('GOOGLE_SHEET_ID');
     const sheetName = Deno.env.get('GOOGLE_SHEET_NAME');
 
@@ -98,7 +98,7 @@ export async function appendDemonToSheet(demon: Demon): Promise<string> {
 
     // Update specific row instead of appending
     const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(sheetName)}!A${nextRow}:G${nextRow}?valueInputOption=USER_ENTERED`;
-    
+
     console.log('🌐 Calling Google Sheets API to update row', nextRow);
     const response = await fetch(updateUrl, {
       method: 'PUT',
@@ -129,7 +129,7 @@ export async function appendDemonToSheet(demon: Demon): Promise<string> {
 export async function updateDemonInSheet(demon: Demon, rank: number): Promise<string> {
   try {
     console.log('📊 Updating demon in Google Sheets:', demon.name, 'at rank', rank);
-    
+
     const sheetId = Deno.env.get('GOOGLE_SHEET_ID');
     const sheetName = Deno.env.get('GOOGLE_SHEET_NAME');
 
@@ -158,7 +158,7 @@ export async function updateDemonInSheet(demon: Demon, rank: number): Promise<st
 
     // Update the specific row
     const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(sheetName)}!A${row}:G${row}?valueInputOption=USER_ENTERED`;
-    
+
     const response = await fetch(updateUrl, {
       method: 'PUT',
       headers: {
@@ -188,7 +188,7 @@ export async function updateDemonInSheet(demon: Demon, rank: number): Promise<st
 export async function deleteDemonFromSheet(rank: number): Promise<string> {
   try {
     console.log('📊 Deleting demon from Google Sheets at rank', rank);
-    
+
     const sheetId = Deno.env.get('GOOGLE_SHEET_ID');
     const sheetName = Deno.env.get('GOOGLE_SHEET_NAME');
 
@@ -218,7 +218,7 @@ export async function deleteDemonFromSheet(rank: number): Promise<string> {
 
     const sheetInfo = await sheetInfoResponse.json();
     const sheet = sheetInfo.sheets.find((s: any) => s.properties.title === sheetName);
-    
+
     if (!sheet) {
       console.error('❌ Sheet not found:', sheetName);
       return 'error: sheet not found';

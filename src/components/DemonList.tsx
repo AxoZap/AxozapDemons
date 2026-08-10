@@ -98,18 +98,17 @@ function GddlInline({ demon }: { demon: Demon }) {
     }}>
       {/* GDDL Tier */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '2rem' }}>
-        <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tier</span>
-        <span style={{ fontWeight: 700, color: tierColor(data?.tier ?? null) }}>
-          {data?.tier != null ? data.tier : '?'}
-        </span>
+      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tier</span>
+      <span style={{ fontWeight: 700, color: tierColor(data?.tier ?? null) }}>
+      {data?.tier != null ? Math.round(data.tier) : '?'}
+      </span>
       </div>
-
       {/* Avg Enjoyment */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '2.2rem' }}>
-        <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Avg Enj</span>
-        <span style={{ fontWeight: 700, color: data?.avgEnjoyment != null ? '#f59e0b' : 'var(--text-secondary)' }}>
-          {data?.avgEnjoyment != null ? data.avgEnjoyment.toFixed(1) : '—'}
-        </span>
+      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Avg Enj</span>
+      <span style={{ fontWeight: 700, color: data?.avgEnjoyment != null ? '#f59e0b' : 'var(--text-secondary)' }}>
+      {data?.avgEnjoyment != null ? Math.round(data.avgEnjoyment) : '—'}
+      </span>
       </div>
 
       <div style={{ width: '1px', height: '1.75rem', background: 'var(--border)' }} />
