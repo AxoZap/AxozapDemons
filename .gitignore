@@ -3,3 +3,4 @@ node_modules/
 build/
 .codex
 .codex/
+GD/build-win

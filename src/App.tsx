@@ -4,7 +4,6 @@ import { AddDemonForm } from './components/AddDemonForm';
 import { EditDemonForm } from './components/EditDemonForm';
 import { DemonFilters } from './components/DemonFilters';
 import { Flame, Lock, Loader2 } from 'lucide-react';
-import { projectId, publicAnonKey } from './utils/supabase/info';
 
 export interface Demon {
   id: string;
@@ -20,7 +19,9 @@ export interface Demon {
   levelId?: string; // GD Level ID for GDDL lookups
 }
 
-const API_URL = `https://${projectId}.supabase.co/functions/v1/make-server-7e6e6986`;
+// Updated to point directly to your Cloudflare Worker backend
+const API_URL = "https://axozap-backend.peteystillwell.workers.dev/make-server-7e6e6986";
+
 export default function App() {
   const [demons, setDemons] = useState<Demon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,12 +52,8 @@ export default function App() {
   const loadDemons = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/demons`, {
-        headers: {
-          Authorization: `Bearer ${publicAnonKey}`,
-        },
-      });
-      
+      const response = await fetch(`${API_URL}/demons`);
+
       if (response.ok) {
         const data = await response.json();
         setDemons(data);
@@ -76,7 +73,6 @@ export default function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ password, demon }),
       });
@@ -110,7 +106,6 @@ export default function App() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ password }),
       });
@@ -140,7 +135,6 @@ export default function App() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ password, demon: updatedDemon }),
       });
@@ -165,13 +159,11 @@ export default function App() {
       return;
     }
 
-    // Import the bulk import function
     const { bulkImportDemons } = await import('./import-demons');
-    
+
     try {
       const result = await bulkImportDemons(password);
       alert(`✅ Successfully imported ${result.count} demons!`);
-      // Reload demons from server
       await loadDemons();
     } catch (error) {
       console.error('Error importing demons:', error);
@@ -190,7 +182,6 @@ export default function App() {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ password }),
       });
@@ -198,16 +189,7 @@ export default function App() {
       if (response.ok) {
         const result = await response.json();
         console.log(`✅ Server cleared ${result.count} demons from database`);
-        console.log(`📊 Server reports ${result.remaining} demons remaining`);
-        
-        // Reload from server to confirm deletion
         await loadDemons();
-        
-        if (result.remaining === 0) {
-          console.log(`✅ Successfully cleared all ${result.count} demons!`);
-        } else {
-          console.log(`⚠️ Cleared ${result.count} demons, but ${result.remaining} still remain.`);
-        }
       } else {
         const error = await response.json();
         console.error('Clear failed:', error);
@@ -224,29 +206,16 @@ export default function App() {
     }
 
     try {
-      console.log('💥 Starting nuclear reset...');
       const response = await fetch(`${API_URL}/nuclear-reset`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ password }),
       });
 
       if (response.ok) {
-        const result = await response.json();
-        console.log(`💥 Nuclear reset complete!`);
-        console.log(`Nuked: ${result.nuked}, Remaining: ${result.remaining}`);
-        
-        // Reload from server
         await loadDemons();
-        
-        if (result.remaining === 0) {
-          console.log(`✅ Database completely wiped! Ready for fresh import.`);
-        } else {
-          console.error(`⚠️ WARNING: ${result.remaining} demons still remain after nuke!`);
-        }
       } else {
         const error = await response.json();
         console.error('Nuclear reset failed:', error);
@@ -262,17 +231,15 @@ export default function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${publicAnonKey}`,
         },
         body: JSON.stringify({ password }),
       });
 
       const data = await response.json();
-      
+
       if (data.valid) {
         setIsUnlocked(true);
         setShowPasswordPrompt(false);
-        // Keep password in state for adding demons
       } else {
         alert('Incorrect password!');
         setPassword('');
@@ -293,12 +260,10 @@ export default function App() {
 
   const handleToggleLock = () => {
     if (isUnlocked) {
-      // If currently unlocked, lock it
       setIsUnlocked(false);
       setShowAddForm(false);
-      setPassword(''); // Clear password on lock
+      setPassword('');
     } else {
-      // If currently locked, show password prompt
       setShowPasswordPrompt(true);
     }
   };
@@ -316,14 +281,14 @@ export default function App() {
       const nameGroups = new Map<string, Demon[]>();
       demons.forEach(d => {
         const baseName = d.name.toLowerCase()
-          .replace(/\s*-\s*gauntlet/i, '')
-          .replace(/\s*-\s*weekly/i, '')
-          .replace(/\s*-\s*event/i, '')
-          .trim();
+        .replace(/\s*-\s*gauntlet/i, '')
+        .replace(/\s*-\s*weekly/i, '')
+        .replace(/\s*-\s*event/i, '')
+        .trim();
         if (!nameGroups.has(baseName)) nameGroups.set(baseName, []);
         nameGroups.get(baseName)!.push(d);
       });
-      
+
       nameGroups.forEach(group => {
         if (group.length > 1) {
           const normal = group.find(d => !d.gauntlet && !d.weekly && !d.event);
@@ -344,148 +309,148 @@ export default function App() {
   }, [demons, filters.unique]);
 
   const filteredAndSortedDemons = demons
-    .map(demon => ({ ...demon, placement: placementMap.get(demon.id) }))
-    .filter((demon) => {
-      if (filters.unique && duplicatesToHide.has(demon.id)) return false;
-      if (filters.difficulty !== 'All' && demon.difficulty !== filters.difficulty) return false;
-      if (filters.rating !== 'All' && demon.rating !== filters.rating) return false;
-      if (filters.searchQuery && !demon.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) return false;
+  .map(demon => ({ ...demon, placement: placementMap.get(demon.id) }))
+  .filter((demon) => {
+    if (filters.unique && duplicatesToHide.has(demon.id)) return false;
+    if (filters.difficulty !== 'All' && demon.difficulty !== filters.difficulty) return false;
+    if (filters.rating !== 'All' && demon.rating !== filters.rating) return false;
+    if (filters.searchQuery && !demon.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) return false;
 
-      const hasSpecialFilter = filters.gauntlet || filters.weekly || filters.event || filters.nonSpecial;
-      if (hasSpecialFilter) {
-        const isNonSpecial = !demon.gauntlet && !demon.weekly && !demon.event;
-        let matchesSpecial = false;
-        if (filters.gauntlet && demon.gauntlet) matchesSpecial = true;
-        if (filters.weekly && demon.weekly) matchesSpecial = true;
-        if (filters.event && demon.event) matchesSpecial = true;
-        if (filters.nonSpecial && isNonSpecial) matchesSpecial = true;
-        if (!matchesSpecial) return false;
-      }
+    const hasSpecialFilter = filters.gauntlet || filters.weekly || filters.event || filters.nonSpecial;
+    if (hasSpecialFilter) {
+      const isNonSpecial = !demon.gauntlet && !demon.weekly && !demon.event;
+      let matchesSpecial = false;
+      if (filters.gauntlet && demon.gauntlet) matchesSpecial = true;
+      if (filters.weekly && demon.weekly) matchesSpecial = true;
+      if (filters.event && demon.event) matchesSpecial = true;
+      if (filters.nonSpecial && isNonSpecial) matchesSpecial = true;
+      if (!matchesSpecial) return false;
+    }
 
-      return true;
-    })
-    .sort((a, b) => {
-      let comparison = 0;
-      
-      if (sortBy === 'order') {
-        // Sort by insertion order (ID)
-        comparison = parseInt(a.id) - parseInt(b.id);
-      } else if (sortBy === 'name') {
-        comparison = a.name.localeCompare(b.name);
-      } else if (sortBy === 'attempts') {
-        comparison = (a.attempts || 0) - (b.attempts || 0);
-      } else if (sortBy === 'difficulty') {
-        const difficultyOrder = { Easy: 1, Medium: 2, Hard: 3, Insane: 4, Extreme: 5 };
-        comparison = difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
+    return true;
+  })
+  .sort((a, b) => {
+    let comparison = 0;
+
+    if (sortBy === 'order') {
+      comparison = parseInt(a.id) - parseInt(b.id);
+    } else if (sortBy === 'name') {
+      comparison = a.name.localeCompare(b.name);
+    } else if (sortBy === 'attempts') {
+      comparison = (a.attempts || 0) - (b.attempts || 0);
+    } else if (sortBy === 'difficulty') {
+      const difficultyOrder = { Easy: 1, Medium: 2, Hard: 3, Insane: 4, Extreme: 5 };
+      comparison = difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+    }
+
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+
   if (loading) {
     return (
       <div className="loading">
-        <Loader2 size={48} />
-        <p>Loading demons...</p>
+      <Loader2 size={48} />
+      <p>Loading demons...</p>
       </div>
     );
   }
 
   return (
     <div className="app">
-      {/* Lock/Unlock button - top right */}
-      <button 
-        onClick={handleToggleLock} 
-        className="lock-button"
-        title={isUnlocked ? "Lock (hide admin controls)" : "Unlock (show admin controls)"}
-      >
-        <Lock size={20} />
+    {/* Lock/Unlock button - top right */}
+    <button
+    onClick={handleToggleLock}
+    className="lock-button"
+    title={isUnlocked ? "Lock (hide admin controls)" : "Unlock (show admin controls)"}
+    >
+    <Lock size={20} />
+    </button>
+
+    {/* Password prompt modal */}
+    {showPasswordPrompt && (
+      <div className="modal-overlay" onClick={() => setShowPasswordPrompt(false)}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <h2>Enter Admin Password</h2>
+      <input
+      type="password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') handleUnlock();
+      }}
+      placeholder="Password"
+      autoFocus
+      autoComplete="off"
+      />
+      <div className="modal-actions">
+      <button onClick={handleUnlock} className="btn">
+      Unlock
       </button>
+      <button onClick={() => setShowPasswordPrompt(false)} className="btn btn-secondary">
+      Cancel
+      </button>
+      </div>
+      </div>
+      </div>
+    )}
 
-      {/* Password prompt modal */}
-      {showPasswordPrompt && (
-        <div className="modal-overlay" onClick={() => setShowPasswordPrompt(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Enter Admin Password</h2>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleUnlock();
-              }}
-              placeholder="Password"
-              autoFocus
-              autoComplete="off"
-            />
-            <div className="modal-actions">
-              <button onClick={handleUnlock} className="btn">
-                Unlock
-              </button>
-              <button onClick={() => setShowPasswordPrompt(false)} className="btn btn-secondary">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+    <header className="header">
+    <div className="header-content">
+    <Flame className="logo" size={32} />
+    <h1>AxoZap's Demons</h1>
+    </div>
+    <p className="subtitle">Geometry Dash</p>
+    </header>
 
-      <header className="header">
-        <div className="header-content">
-          <Flame className="logo" size={32} />
-          <h1>AxoZap's Demons</h1>
-        </div>
-        <p className="subtitle">Geometry Dash</p>
-      </header>
+    <main className="container">
+    {isUnlocked && (
+      <div className="admin-controls">
+      <button onClick={handleAddButtonClick} className="btn">
+      Add Demon
+      </button>
+      </div>
+    )}
 
-      <main className="container">
-        {isUnlocked && (
-          <div className="admin-controls">
-            <button onClick={handleAddButtonClick} className="btn">
-              Add Demon
-            </button>
-          </div>
-        )}
+    {/* Add Form */}
+    {showAddForm && isUnlocked && (
+      <div style={{ marginBottom: '2rem' }}>
+      <AddDemonForm onAdd={handleAddDemon} onCancel={() => setShowAddForm(false)} />
+      </div>
+    )}
 
-        {/* Add Form */}
-        {showAddForm && isUnlocked && (
-          <div style={{ marginBottom: '2rem' }}>
-            <AddDemonForm onAdd={handleAddDemon} onCancel={() => setShowAddForm(false)} />
-          </div>
-        )}
+    {/* Edit Form Modal */}
+    {editingDemon && (
+      <EditDemonForm
+      demon={editingDemon}
+      onSave={handleSaveEdit}
+      onCancel={() => setEditingDemon(null)}
+      />
+    )}
 
-        {/* Edit Form Modal */}
-        {editingDemon && (
-          <EditDemonForm 
-            demon={editingDemon} 
-            onSave={handleSaveEdit} 
-            onCancel={() => setEditingDemon(null)} 
-          />
-        )}
+    {/* Filters */}
+    <DemonFilters
+    filters={filters}
+    onFiltersChange={setFilters}
+    sortBy={sortBy}
+    sortOrder={sortOrder}
+    onSortChange={setSortBy}
+    onSortOrderChange={setSortOrder}
+    />
 
-        {/* Filters */}
-        <DemonFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={setSortBy}
-          onSortOrderChange={setSortOrder}
-        />
-
-        {/* Demon List */}
-        <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-          Showing {filteredAndSortedDemons.length} demon{filteredAndSortedDemons.length !== 1 ? 's' : ''}
-        </div>
-        <DemonList 
-          demons={filteredAndSortedDemons}
-          allDemons={demons}
-          onDelete={handleDeleteDemon} 
-          onEdit={handleEditDemon}
-          isUnlocked={isUnlocked}
-          showFilteredRanks={showFilteredRanks}
-          onToggleRanks={() => setShowFilteredRanks(r => !r)}
-        />
-      </main>
+    {/* Demon List */}
+    <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+    Showing {filteredAndSortedDemons.length} demon{filteredAndSortedDemons.length !== 1 ? 's' : ''}
+    </div>
+    <DemonList
+    demons={filteredAndSortedDemons}
+    allDemons={demons}
+    onDelete={handleDeleteDemon}
+    onEdit={handleEditDemon}
+    isUnlocked={isUnlocked}
+    showFilteredRanks={showFilteredRanks}
+    onToggleRanks={() => setShowFilteredRanks(r => !r)}
+    />
+    </main>
     </div>
   );
 }
