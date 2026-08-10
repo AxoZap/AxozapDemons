@@ -134,9 +134,19 @@ app.post("/make-server-7e6e6986/demons", async (c) => {
 	const adminPw = c.env.ADMIN_PASSWORD || "admin";
 	if (password !== adminPw) return c.json({ error: "Invalid password" }, 401);
 
-	const id = Date.now().toString();
-	const demonWithId = { ...demon, id };
-	await dbSet(c.env.axozap_db, `demon:${id}`, demonWithId);
+	// Fetch existing demons to compute the next sequential integer ID
+	const existingDemons = await dbGetByPrefix(c.env.axozap_db, "demon:");
+	let maxId = 0;
+	for (const d of existingDemons) {
+		const numId = parseInt(d.id, 10);
+		if (!isNaN(numId) && numId > maxId) {
+			maxId = numId;
+		}
+	}
+	const nextId = (maxId + 1).toString();
+
+	const demonWithId = { ...demon, id: nextId };
+	await dbSet(c.env.axozap_db, `demon:${nextId}`, demonWithId);
 
 	c.executionCtx.waitUntil(appendDemonToSheet(c.env, demonWithId));
 
