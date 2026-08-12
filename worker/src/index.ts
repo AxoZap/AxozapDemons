@@ -153,6 +153,17 @@ app.post("/make-server-7e6e6986/demons", async (c) => {
 	return c.json(demonWithId);
 });
 
+app.put("/make-server-7e6e6986/demons/:id", async (c) => {
+	const id = c.req.param("id");
+	const { password, demon } = await c.req.json();
+	const adminPw = c.env.ADMIN_PASSWORD || "admin";
+	if (password !== adminPw) return c.json({ error: "Invalid password" }, 401);
+
+	const demonWithId = { ...demon, id };
+	await dbSet(c.env.axozap_db, `demon:${id}`, demonWithId);
+	return c.json(demonWithId);
+});
+
 app.delete("/make-server-7e6e6986/demons/:id", async (c) => {
 	const id = c.req.param("id");
 	const { password } = await c.req.json();
@@ -197,7 +208,7 @@ app.get("/make-server-7e6e6986/gddl/:levelId", async (c) => {
 
 		if (levelRes.ok) {
 			try {
-				const d = await levelRes.json();
+				const d = (await levelRes.json()) as any;
 				tier = d.Rating ?? d.rating ?? null;
 				avgEnjoyment = d.Enjoyment ?? d.enjoyment ?? null;
 			} catch (e) {
@@ -212,7 +223,7 @@ app.get("/make-server-7e6e6986/gddl/:levelId", async (c) => {
 				try {
 					const meRes = await fetch("https://gdladder.com/api/user/me", { headers });
 					if (meRes.ok) {
-						const meData = await meRes.json();
+						const meData = (await meRes.json()) as any;
 						cachedGddlUserId = meData.ID ?? meData.id ?? meData.userID ?? null;
 						console.log("👤 Resolved GDDL User ID from /api/user/me:", cachedGddlUserId);
 					} else {
@@ -232,7 +243,7 @@ app.get("/make-server-7e6e6986/gddl/:levelId", async (c) => {
 
 				if (subRes.ok) {
 					try {
-						const match = await subRes.json();
+						const match = (await subRes.json()) as any;
 						myTier = match.Rating ?? match.rating ?? match.Tier ?? match.tier ?? null;
 						enjoyment = match.Enjoyment ?? match.enjoyment ?? null;
 					} catch (e) {

@@ -12,7 +12,17 @@ export function EditDemonForm({ demon, onSave, onCancel }: EditDemonFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const updatedDemon: Demon = { ...formData };
+    if (updatedDemon.difficulty !== 'Extreme') {
+      delete updatedDemon.attempts;
+    }
+    if (updatedDemon.videoUrl) {
+      updatedDemon.videoUrl = updatedDemon.videoUrl.trim();
+    }
+    if (updatedDemon.levelId) {
+      updatedDemon.levelId = updatedDemon.levelId.trim();
+    }
+    onSave(updatedDemon);
   };
 
   return (
