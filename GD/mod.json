@@ -5,7 +5,7 @@
   },
   "id": "axozap.demon_list_sync",
   "name": "AxoZap Demon Sync",
-  "version": "v1.0.0",
+  "version": "v1.1.0",
   "developer": "AxoZap",
   "description": "Private mod to send completed demons to AxoZap's Demon List website.",
   "settings": {
@@ -13,11 +13,6 @@
       "name": "Cloudflare Worker API Endpoint",
       "type": "string",
       "default": "https://axozap-backend.peteystillwell.workers.dev/make-server-7e6e6986"
-    },
-    "publishable-key": {
-      "name": "Cloudflare Worker API Key",
-      "type": "string",
-      "default": "sb_publishable_yeq1WvU-wA8onl8j29yPbw_LwITAhNW"
     },
     "admin-password": {
       "name": "Admin Password",

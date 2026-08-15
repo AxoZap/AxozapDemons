@@ -107,7 +107,6 @@ protected:
 
 	void onSend(CCObject*) {
 		std::string apiUrl = Mod::get()->getSettingValue<std::string>("api-url");
-		std::string pubKey = Mod::get()->getSettingValue<std::string>("publishable-key");
 		std::string password = Mod::get()->getSettingValue<std::string>("admin-password");
 
 		if (password.empty()) {
@@ -138,24 +137,29 @@ protected:
 		body["password"] = password;
 		body["demon"] = demonObj;
 
+		while (!apiUrl.empty() && apiUrl.back() == '/') {
+			apiUrl.pop_back();
+		}
+
+		std::string postUrl = fmt::format("{}/demons", apiUrl);
+
 		web::WebRequest req;
+		req.timeout(std::chrono::seconds(15));
 		req.header("Content-Type", "application/json");
-		req.header("Authorization", fmt::format("Bearer {}", pubKey));
-		req.header("apikey", pubKey);
 		req.bodyJSON(body);
 
 		// Don't close yet — wait for the response first
 		m_listener.spawn(
-			req.post(fmt::format("{}/demons", apiUrl)),
-						 [this](web::WebResponse res) {
-							 if (res.ok()) {
-								 FLAlertLayer::create("Success!", "Demon added to your list successfully!", "OK")->show();
-							 } else {
-								 auto errText = res.string().unwrapOr("Unknown Error");
-								 FLAlertLayer::create("Error", fmt::format("Failed to add demon: {}", errText), "OK")->show();
-							 }
-							 this->keyBackClicked(); // close the popup now that we're done
-						 }
+			req.post(postUrl),
+			[this, postUrl](web::WebResponse res) {
+				if (res.ok()) {
+					FLAlertLayer::create("Success!", "Demon added to your list successfully!", "OK")->show();
+				} else {
+					auto errText = res.string().unwrapOr("Unknown Error");
+					FLAlertLayer::create("Error", fmt::format("Failed to add demon: {}\nURL: {}", errText, postUrl), "OK")->show();
+				}
+				this->keyBackClicked(); // close the popup now that we're done
+			}
 		);
 	}
 
