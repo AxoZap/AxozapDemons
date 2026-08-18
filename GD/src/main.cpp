@@ -27,14 +27,14 @@ protected:
 	GJGameLevel* m_level = nullptr;
 	TextInput* m_videoInput = nullptr;
 	TextInput* m_attemptsInput = nullptr;
+	CCMenuItemToggler* m_moonToggle = nullptr;
 	CCMenuItemToggler* m_weeklyToggle = nullptr;
 	CCMenuItemToggler* m_gauntletToggle = nullptr;
 	CCMenuItemToggler* m_eventToggle = nullptr;
-	// line 33
 	async::TaskHolder<web::WebResponse> m_listener;
 
 	bool init(GJGameLevel* level) {
-		if (!Popup::init(300.f, 280.f)) return false;
+		if (!Popup::init(300.f, 260.f)) return false;
 
 		m_level = level;
 		this->setTitle("Send to Demon List");
@@ -63,11 +63,16 @@ protected:
 		m_videoInput->setPosition({ width / 2 + 40, height - 85 });
 		m_mainLayer->addChild(m_videoInput);
 
-		// 3. Checkboxes: Weekly / Gauntlet / Event
-		float toggleY = height - 130.f;
-		m_weeklyToggle   = makeToggle("Weekly",   toggleY);
-		m_gauntletToggle = makeToggle("Gauntlet", toggleY - 30.f);
-		m_eventToggle    = makeToggle("Event",    toggleY - 60.f);
+		// 3. Checkboxes (2 columns): Moon / Weekly / Gauntlet / Event
+		float toggleY = height - 125.f;
+		bool isPlat = m_level->isPlatformer() || m_level->m_levelLength == 5;
+		bool isWeekly = m_level->m_dailyID.value() > 0;
+		bool isGauntlet = m_level->m_gauntletLevel || m_level->m_gauntletLevel2;
+
+		m_moonToggle     = makeToggle("Moon (Plat)", 35.f,  toggleY,        isPlat);
+		m_weeklyToggle   = makeToggle("Weekly",      165.f, toggleY,        isWeekly);
+		m_gauntletToggle = makeToggle("Gauntlet",    35.f,  toggleY - 30.f, isGauntlet);
+		m_eventToggle    = makeToggle("Event",       165.f, toggleY - 30.f, false);
 
 		// 4. Send Button
 		auto sendBtnBtn = ButtonSprite::create("Send");
@@ -82,12 +87,10 @@ protected:
 		return true;
 	}
 
-	// Small helper: builds a labeled toggle checkbox on the left edge
-	CCMenuItemToggler* makeToggle(const char* label, float y) {
-		float x = 40.f;
-
+	// Small helper: builds a labeled toggle checkbox
+	CCMenuItemToggler* makeToggle(const char* label, float x, float y, bool defaultOn = false) {
 		auto lbl = CCLabelBMFont::create(label, "bigFont.fnt");
-		lbl->setScale(0.4f);
+		lbl->setScale(0.38f);
 		lbl->setAnchorPoint({ 0.f, 0.5f });
 		lbl->setPosition({ x + 20.f, y });
 		m_mainLayer->addChild(lbl);
@@ -95,9 +98,10 @@ protected:
 		auto toggle = CCMenuItemToggler::createWithStandardSprites(
 			this,
 			menu_selector(SubmitDemonPopup::onToggle),
-																   0.6f
+			0.55f
 		);
 		toggle->setPosition({ x, y });
+		toggle->toggle(defaultOn);
 		m_buttonMenu->addChild(toggle);
 		return toggle;
 	}
@@ -117,7 +121,7 @@ protected:
 		matjson::Value demonObj;
 		demonObj["name"] = m_level->m_levelName.c_str();
 		demonObj["difficulty"] = getDemonDifficultyString(m_level);
-		demonObj["rating"] = m_level->isPlatformer() ? "Moon" : "Star";
+		demonObj["rating"] = m_moonToggle->isToggled() ? "Moon" : "Star";
 		demonObj["gauntlet"] = m_gauntletToggle->isToggled();
 		demonObj["weekly"] = m_weeklyToggle->isToggled();
 		demonObj["event"] = m_eventToggle->isToggled();
