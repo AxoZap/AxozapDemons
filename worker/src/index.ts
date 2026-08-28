@@ -199,7 +199,7 @@ app.get("/make-server-7e6e6986/gddl/:levelId", async (c) => {
 		}
 
 		// 1. Fetch public level info
-		const levelRes = await fetch(`https://gdladder.com/api/level/${levelId}`, { headers });
+		const levelRes = await fetch(`https://gdladder.com/api/levels/${levelId}`, { headers });
 
 		let tier: number | null = null;
 		let avgEnjoyment: number | null = null;
