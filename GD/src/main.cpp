@@ -21,6 +21,24 @@ std::string getDemonDifficultyString(GJGameLevel* level) {
 	}
 }
 
+// Helper to get admin password (checks local auth file first, then Geode setting)
+std::string getAdminPassword() {
+	auto saveFile = Mod::get()->getSaveDir() / "axozap_auth.txt";
+	if (std::filesystem::exists(saveFile)) {
+		std::ifstream file(saveFile);
+		if (file.is_open()) {
+			std::string key;
+			std::getline(file, key);
+			// Trim whitespace / newlines
+			while (!key.empty() && (key.back() == '\r' || key.back() == '\n' || key.back() == ' ')) {
+				key.pop_back();
+			}
+			if (!key.empty()) return key;
+		}
+	}
+	return Mod::get()->getSettingValue<std::string>("admin-password");
+}
+
 // Custom Popup to confirm details and add optional Video URL / Attempts / flags
 class SubmitDemonPopup : public geode::Popup {
 protected:
@@ -111,10 +129,10 @@ protected:
 
 	void onSend(CCObject*) {
 		std::string apiUrl = Mod::get()->getSettingValue<std::string>("api-url");
-		std::string password = Mod::get()->getSettingValue<std::string>("admin-password");
+		std::string password = getAdminPassword();
 
 		if (password.empty()) {
-			FLAlertLayer::create("Error", "Please set your Admin Password in Geode mod settings first!", "OK")->show();
+			FLAlertLayer::create("Error", "Unauthorized: axozap_auth.txt not found and no password set in settings!", "OK")->show();
 			return;
 		}
 
@@ -184,8 +202,8 @@ class $modify(DemonSyncLevelInfoLayer, LevelInfoLayer) {
 	bool init(GJGameLevel* level, bool challenge) {
 		if (!LevelInfoLayer::init(level, challenge)) return false;
 
-		// Only inject the button if the level is actually a Demon
-		if (level->m_demon.value()) {
+		// Only inject the button if the level is actually a Demon and authentication is present
+		if (level->m_demon.value() && !getAdminPassword().empty()) {
 			auto sideMenu = this->getChildByID("left-side-menu");
 			if (!sideMenu) {
 				sideMenu = this->getChildByID("other-menu");
