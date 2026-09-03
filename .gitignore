@@ -1,7 +1,13 @@
 .aider*
 node_modules/
 build/
+dist/
 .codex
 .codex/
 GD/build-win/
 worker/node_modules/
+worker/.wrangler/
+.env
+.env.*
+!.env.example
+*.local

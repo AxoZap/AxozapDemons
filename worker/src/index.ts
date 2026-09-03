@@ -119,7 +119,10 @@ app.get("/make-server-7e6e6986/health", (c) => c.json({ status: "ok" }));
 
 app.post("/make-server-7e6e6986/verify-password", async (c) => {
 	const { password } = await c.req.json();
-	const adminPw = c.env.ADMIN_PASSWORD || "admin";
+	const adminPw = c.env.ADMIN_PASSWORD;
+	if (!adminPw) {
+		return c.json({ valid: false, error: "ADMIN_PASSWORD not configured on server" }, 500);
+	}
 	return c.json({ valid: password === adminPw });
 });
 
@@ -131,8 +134,8 @@ app.get("/make-server-7e6e6986/demons", async (c) => {
 
 app.post("/make-server-7e6e6986/demons", async (c) => {
 	const { password, demon } = await c.req.json();
-	const adminPw = c.env.ADMIN_PASSWORD || "admin";
-	if (password !== adminPw) return c.json({ error: "Invalid password" }, 401);
+	const adminPw = c.env.ADMIN_PASSWORD;
+	if (!adminPw || password !== adminPw) return c.json({ error: "Unauthorized" }, 401);
 
 	// Fetch existing demons to compute the next sequential integer ID
 	const existingDemons = await dbGetByPrefix(c.env.axozap_db, "demon:");
@@ -156,8 +159,8 @@ app.post("/make-server-7e6e6986/demons", async (c) => {
 app.put("/make-server-7e6e6986/demons/:id", async (c) => {
 	const id = c.req.param("id");
 	const { password, demon } = await c.req.json();
-	const adminPw = c.env.ADMIN_PASSWORD || "admin";
-	if (password !== adminPw) return c.json({ error: "Invalid password" }, 401);
+	const adminPw = c.env.ADMIN_PASSWORD;
+	if (!adminPw || password !== adminPw) return c.json({ error: "Unauthorized" }, 401);
 
 	const demonWithId = { ...demon, id };
 	await dbSet(c.env.axozap_db, `demon:${id}`, demonWithId);
@@ -167,8 +170,8 @@ app.put("/make-server-7e6e6986/demons/:id", async (c) => {
 app.delete("/make-server-7e6e6986/demons/:id", async (c) => {
 	const id = c.req.param("id");
 	const { password } = await c.req.json();
-	const adminPw = c.env.ADMIN_PASSWORD || "admin";
-	if (password !== adminPw) return c.json({ error: "Invalid password" }, 401);
+	const adminPw = c.env.ADMIN_PASSWORD;
+	if (!adminPw || password !== adminPw) return c.json({ error: "Unauthorized" }, 401);
 
 	await dbDel(c.env.axozap_db, `demon:${id}`);
 	return c.json({ success: true });
